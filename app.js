@@ -47,9 +47,25 @@ updateBadge();
 document.addEventListener("input", planifierSauvegardeRapport, true);
 document.addEventListener("click", planifierSauvegardeRapport, true);
 
-// PWA : fonctionnement hors ligne (met en cache l'application, pas vos données).
+// PWA : fonctionnement hors ligne (met en cache l'application, pas vos données)
+// + mise à jour automatique : on vérifie régulièrement s'il existe une nouvelle version,
+// et dès qu'elle prend la main, on recharge la page pour l'appliquer (sans couper une saisie en cours).
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
-  navigator.serviceWorker.register("sw.js").catch(() => {});
+  navigator.serviceWorker.register("sw.js").then(reg => {
+    reg.update().catch(() => {});
+    setInterval(() => reg.update().catch(() => {}), 60 * 60 * 1000);   // toutes les heures
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") reg.update().catch(() => {});
+    });
+  }).catch(() => {});
+
+  let majPrete = false;
+  const rechargerSiVisible = () => { if (majPrete && document.visibilityState === "visible") location.reload(); };
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    majPrete = true;
+    rechargerSiVisible();          // déjà au premier plan : on recharge tout de suite
+  });
+  document.addEventListener("visibilitychange", rechargerSiVisible);  // sinon, au retour au premier plan
 }
 
 // Installation sur l'appareil (tablette) : bandeau avec bouton « Installer ».
