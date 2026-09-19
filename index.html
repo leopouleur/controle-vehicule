@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1f4e8c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Contrôle">
+  <title>Contrôle véhicule</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="splash" class="splash" role="presentation"><img src="logo.png" alt="Trucks UTC"></div>
+
+  <header class="topbar">
+    <div>
+      <h1>Contrôle véhicule</h1>
+      <div id="fiche-name" class="sub" hidden></div>
+    </div>
+    <button id="btn-reset" class="ghost" type="button">Nouveau</button>
+  </header>
+
+  <div id="install-banner" class="install-banner" hidden>
+    <span>Installer l'application sur cette tablette pour l'utiliser comme une appli, même sans connexion.</span>
+    <div class="install-banner-btns">
+      <button id="btn-install" type="button" class="accent">Installer</button>
+      <button id="btn-install-dismiss" type="button" class="ghost-dark" aria-label="Fermer">✕</button>
+    </div>
+  </div>
+
+  <main>
+    <section id="tab-choix" class="panel active" role="tabpanel"></section>
+    <section id="tab-vehicule" class="panel" role="tabpanel"></section>
+    <section id="tab-checklist" class="panel" role="tabpanel"></section>
+    <section id="tab-pieces" class="panel" role="tabpanel"></section>
+  </main>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <nav class="tabbar" role="tablist">
+    <button class="tab active" role="tab" data-tab="choix" type="button">
+      <span class="ico">📋</span><span>Type de contrôle</span>
+    </button>
+    <button class="tab" role="tab" data-tab="vehicule" type="button">
+      <span class="ico">🚛</span><span>Véhicule</span>
+    </button>
+    <button class="tab" role="tab" data-tab="checklist" type="button">
+      <span class="ico">✅</span><span>Checklist</span>
+      <span id="badge" class="badge" hidden>0</span>
+    </button>
+    <button class="tab" role="tab" data-tab="pieces" type="button">
+      <span class="ico">🔧</span><span>Pièces à débiter</span>
+      <span id="badge-pieces" class="badge count-badge" hidden>0</span>
+    </button>
+  </nav>
+
+  <script src="fiches.js"></script>
+  <script src="state.js"></script>
+  <script src="choix.js"></script>
+  <script src="vehicule.js"></script>
+  <script src="checklist.js"></script>
+  <script src="catalogue.js"></script>
+  <script src="pieces.js"></script>
+  <script src="pdf-metrics.js"></script>
+  <script src="pdf.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
