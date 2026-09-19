@@ -12,7 +12,6 @@ function renderChoix() {
   }).join("");
 
   root.innerHTML = `
-    ${rapportsHTML()}
     <div class="card">
       <h2>Choisissez le type de contrôle</h2>
       <p class="hint">Sélectionnez la fiche à remplir. Vous passerez ensuite aux informations du véhicule puis à la checklist.</p>
@@ -20,7 +19,6 @@ function renderChoix() {
     </div>
     ${state.fiche ? '<button class="primary-btn" id="go-vehicule" type="button">Continuer → Véhicule</button>' : ""}`;
 
-  initRapportsListeners(root);
   root.querySelectorAll("[data-fiche]").forEach(b =>
     b.addEventListener("click", () => {
       state.fiche = b.dataset.fiche;

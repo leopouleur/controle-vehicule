@@ -7,6 +7,7 @@ function showTab(name) {
   if (name === "vehicule") renderVehicule();
   if (name === "checklist") renderChecklist();
   if (name === "pieces") renderPieces();
+  if (name === "historique") renderHistorique();
   window.scrollTo(0, 0);
 }
 
