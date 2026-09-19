@@ -36,19 +36,19 @@ const CATALOGUE_BRUT = [
   ["Insono D", "74 24 052 097"], ["NCNP00022", "NCNP00022"], ["Écrou P", "74 20 920 408"],
   ["Ceinture chauf", "74 82 617 315"], ["Antenne", "74 23 037 107"], ["Capot G", "74 23 315 401"],
   ["Capot D", "74 23 315 436"], ["Kit PMT S", ""], ["Kit frigo", ""],
-  // --- Ancien T
-  ["Coque de clef", "74 23 775 835", "Ancien T"], ["Par choc av", "74 82 594 229", "Ancien T"],
-  ["Coin G", "74 23 381 300", "Ancien T"], ["Coin D", "74 23 381 302", "Ancien T"],
-  ["Marche pied G", "74 23 315 557", "Ancien T"], ["Marche pied D", "74 23 315 433", "Ancien T"],
+  // --- Ancien T (nom précisé quand la même pièce existe aussi en T EVO avec une autre référence)
+  ["Coque de clef (Ancien T)", "74 23 775 835", "Ancien T"], ["Par choc av (Ancien T)", "74 82 594 229", "Ancien T"],
+  ["Coin G (Ancien T)", "74 23 381 300", "Ancien T"], ["Coin D (Ancien T)", "74 23 381 302", "Ancien T"],
+  ["Marche pied G (Ancien T)", "74 23 315 557", "Ancien T"], ["Marche pied D (Ancien T)", "74 23 315 433", "Ancien T"],
   ["H pass", "74 23 677 873", "Ancien T"], ["H chauf AVEC", "74 23 677 877", "Ancien T"],
   ["H chauf SANS ap tête", "74 23 677 872", "Ancien T"], ["Tapis MOQ", "74 84 526 409", "Ancien T"],
   ["Tapis C", "74 21 514 904", "Ancien T"],
-  // --- T EVO
-  ["Coque de clef", "74 24 448 991", "T EVO"], ["Par choc av", "74 78 520 869", "T EVO"],
-  ["Coin G", "74 84 901 130", "T EVO"], ["Cache G", "74 78 513 768", "T EVO"],
-  ["Coin D", "74 84 901 145", "T EVO"], ["Cache D", "74 78 513 766", "T EVO"],
-  ["Marche pied G", "74 23 591 438", "T EVO"], ["Enjoliveur G", "74 23 588 902", "T EVO"],
-  ["Marche pied D", "74 23 591 439", "T EVO"], ["Enjoliveur D", "74 23 588 905", "T EVO"],
+  // --- T EVO (nom précisé quand la même pièce existe aussi en Ancien T avec une autre référence)
+  ["Coque de clef (T EVO)", "74 24 448 991", "T EVO"], ["Par choc av (T EVO)", "74 78 520 869", "T EVO"],
+  ["Coin G (T EVO)", "74 84 901 130", "T EVO"], ["Cache G", "74 78 513 768", "T EVO"],
+  ["Coin D (T EVO)", "74 84 901 145", "T EVO"], ["Cache D", "74 78 513 766", "T EVO"],
+  ["Marche pied G (T EVO)", "74 23 591 438", "T EVO"], ["Enjoliveur G", "74 23 588 902", "T EVO"],
+  ["Marche pied D (T EVO)", "74 23 591 439", "T EVO"], ["Enjoliveur D", "74 23 588 905", "T EVO"],
   ["Enjo de phare G", "74 84 905 278", "T EVO"], ["Enjo de phare D", "74 84 901 151", "T EVO"]
 ];
 const GROUPES = ["Général", "Ancien T", "T EVO"];
