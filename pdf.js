@@ -6,7 +6,7 @@ const PAGE_W = 210, PAGE_H = 297, MARGE = 10, BAS = 287;
 const COUL = {
   texte: [29, 39, 51], gris: [107, 119, 133], trait: [190, 197, 206],
   ok: [30, 158, 88], warn: [224, 144, 11], ko: [211, 58, 58],
-  bleu: [31, 78, 140], fondSection: [228, 234, 244], fondTete: [31, 78, 140]
+  accent: [223, 4, 2], fondSection: [228, 234, 244], fondTete: [223, 4, 2]
 };
 
 // --- Encodage WinAnsi ---------------------------------------------------
@@ -130,7 +130,7 @@ function tableau(doc, st, cols, entetes, lignes, piedHook) {
     if (st.y + besoin > BAS) nouvellePage();
     if (l.section) {
       doc.rect(MARGE, st.y, PAGE_W - 2 * MARGE, m.h, COUL.fondSection, COUL.trait);
-      doc.text(MARGE + 1.5, st.y + 3.8, winansi(l.section), 8.5, true, COUL.bleu);
+      doc.text(MARGE + 1.5, st.y + 3.8, winansi(l.section), 8.5, true, COUL.accent);
       st.y += m.h;
       return;
     }
@@ -167,10 +167,10 @@ function construireChecklistPdf() {
   let y = 12;
 
   // En-tête
-  doc.text(MARGE, y + 5, winansi(f.nom), 16, true, COUL.bleu);
+  doc.text(MARGE, y + 5, winansi(f.nom), 16, true, COUL.accent);
   doc.text(PAGE_W - MARGE, y + 5, winansi("CONTRÔLE DU VÉHICULE"), 9, true, COUL.gris, true);
   y += 9;
-  doc.rect(MARGE, y, PAGE_W - 2 * MARGE, 0.5, COUL.bleu);
+  doc.rect(MARGE, y, PAGE_W - 2 * MARGE, 0.5, COUL.accent);
   y += 3;
 
   // Bloc véhicule
@@ -252,10 +252,10 @@ function construirePiecesPdf() {
   const doc = new PdfDoc();
   doc.addPage();
   let py = 12;
-  doc.text(MARGE, py + 5, winansi("LISTE DE PIÈCES"), 16, true, COUL.bleu);
+  doc.text(MARGE, py + 5, winansi("LISTE DE PIÈCES"), 16, true, COUL.accent);
   doc.text(PAGE_W - MARGE, py + 5, winansi(f.nom), 9, true, COUL.gris, true);
   py += 9;
-  doc.rect(MARGE, py, PAGE_W - 2 * MARGE, 0.5, COUL.bleu);
+  doc.rect(MARGE, py, PAGE_W - 2 * MARGE, 0.5, COUL.accent);
   py += 5;
   const resume = [v.immat && "Véhicule : " + v.immat, v.date && "Date : " + dateFR(v.date), v.controleur && "Contrôleur : " + v.controleur]
     .filter(Boolean).join("     ");

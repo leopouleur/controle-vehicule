@@ -1,5 +1,5 @@
 :root {
-  --primary: #1f4e8c;
+  --primary: #df0402;
   --bg: #f3f5f8;
   --card: #ffffff;
   --text: #1d2733;
@@ -12,7 +12,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #12171d; --card: #1b222b; --text: #e8edf2;
-    --muted: #93a0ae; --border: #2c3641; --primary: #4a86d6;
+    --muted: #93a0ae; --border: #2c3641; --primary: #ff6659;
   }
 }
 [hidden] { display: none !important; }
