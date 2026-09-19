@@ -301,10 +301,12 @@ async function exportPdf() {
   if (dl) {
     try {
       for (const fi of fichiers) await dl.save({ filename: fi.nom, data: fi.data });
+      marquerExporte();
       toast(fichiers.length > 1 ? "PDF enregistrés : " + fichiers.map(fi => fi.nom).join(", ") : "PDF enregistré : " + fichiers[0].nom);
     } catch (e) { toast(e && e.code === "declined" ? "Enregistrement annulé." : "Enregistrement impossible (" + ((e && (e.message || e.code)) || "erreur") + ")."); }
     return;
   }
+  marquerExporte();
   fichiers.forEach(fi => {   // hors artefact : téléchargement classique
     const a = document.createElement("a");
     a.href = URL.createObjectURL(fi.data); a.download = fi.nom;

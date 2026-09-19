@@ -21,13 +21,8 @@ document.querySelectorAll(".tab").forEach(t =>
   t.addEventListener("click", () => showTab(t.dataset.tab)));
 
 document.getElementById("btn-reset").addEventListener("click", () => {
-  if (!confirm("Démarrer un nouveau contrôle ? Toutes les données saisies seront effacées.")) return;
-  state.fiche = null;
-  state.vehicule = {};
-  state.data = {};
-  state.selection = {};
-  state.admin = false;
-  openCats.clear();
+  if (!confirm("Démarrer un nouveau contrôle ? Le contrôle en cours reste enregistré, vous pourrez le reprendre depuis la liste.")) return;
+  nouveauRapport();
   updateFicheName();
   updateBadge();
   updatePiecesBadge();
@@ -46,6 +41,10 @@ document.getElementById("btn-reset").addEventListener("click", () => {
 initChecklist();
 renderChoix();
 updateBadge();
+
+// Mémoire des rapports : sauvegarde automatique en continu dès qu'une fiche est choisie.
+document.addEventListener("input", planifierSauvegardeRapport, true);
+document.addEventListener("click", planifierSauvegardeRapport, true);
 
 // PWA : fonctionnement hors ligne (met en cache l'application, pas vos données).
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {

@@ -193,6 +193,13 @@ button.link { background: none; border: 0; color: var(--primary); font-size: 13p
 .piece-row:first-child { border-top: 0; padding-top: 0; }
 .del { width: 42px; height: 42px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--ko); font-size: 16px; }
 .empty-list { margin: 0; }
+.rapport-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 6px; border-top: 1px solid var(--border); cursor: pointer; }
+.rapport-row:first-of-type { border-top: 0; }
+.rapport-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rapport-titre { font-weight: 600; font-size: 15px; }
+.rapport-meta { font-size: 12px; color: var(--muted); }
+.rapport-row.courant .rapport-titre { color: var(--primary); }
+.rapport-row .del.arme { background: var(--ko); color: #fff; border-color: var(--ko); }
 @media (max-width: 420px) { .mt { margin-top: 14px; }
 /* Écran d'ouverture : logo sur fond blanc */
 .splash { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; background: #fdfdfe; transition: opacity .4s ease; cursor: pointer; }
