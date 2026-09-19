@@ -1,5 +1,5 @@
 // Export PDF : générateur minimal (Helvetica standard), sans bibliothèque externe.
-// Page 1+ : fiche de contrôle remplie. Dernière page : pièces à débiter.
+// Deux fichiers distincts : la fiche de contrôle remplie, et (si des pièces sont cochées) la liste de pièces.
 
 const MM = 72 / 25.4;
 const PAGE_W = 210, PAGE_H = 297, MARGE = 10, BAS = 287;
@@ -160,7 +160,7 @@ function dateFR(iso) {
   return m ? `${m[3]}/${m[2]}/${m[1]}` : (iso || "");
 }
 
-function construirePdf() {
+function construireChecklistPdf() {
   const f = curFiche(), d = fdata(), v = state.vehicule;
   const doc = new PdfDoc();
   doc.addPage();
@@ -232,26 +232,40 @@ function construirePdf() {
     lg.forEach((l, k) => doc.text(MARGE, st.y + 4 + k * 3.2, l, 7, false, COUL.gris));
   }
 
-  // Feuille des pièces
-  const aDebiter = piecesADebiter();
-  if (aDebiter.length) {
-    doc.addPage();
-    let py = 12;
-    doc.text(MARGE, py + 5, winansi("PIÈCES À DÉBITER"), 16, true, COUL.bleu);
-    doc.text(PAGE_W - MARGE, py + 5, winansi(f.nom), 9, true, COUL.gris, true);
-    py += 9;
-    doc.rect(MARGE, py, PAGE_W - 2 * MARGE, 0.5, COUL.bleu);
-    py += 5;
-    const resume = [v.immat && "Véhicule : " + v.immat, v.date && "Date : " + dateFR(v.date), v.controleur && "Contrôleur : " + v.controleur]
-      .filter(Boolean).join("     ");
-    if (resume) { doc.text(MARGE, py + 2, winansi(resume), 9, false, COUL.texte); py += 7; }
-    tableau(doc, { y: py }, [14, 100, 76], ["N°", "Pièce", "Référence"],
-      aDebiter.map((p, i) => ({ cells: [{ t: String(i + 1) }, { t: p.nom }, { t: p.ref, gras: true }] })));
-  }
-
   // Pieds de page
   const n = doc.pages.length;
   const pied = [f.nom, v.immat].filter(Boolean).join(" · ");
+  for (let i = 0; i < n; i++) {
+    doc.cur = doc.pages[i];
+    doc.text(MARGE, 291, winansi(pied), 7, false, COUL.gris);
+    doc.text(PAGE_W - MARGE, 291, winansi(`Page ${i + 1}/${n}`), 7, false, COUL.gris, true);
+  }
+  return doc.build();
+}
+
+// --- PDF « Liste de pièces » : document séparé, uniquement s'il y a des pièces cochées ---
+function construirePiecesPdf() {
+  const f = curFiche(), v = state.vehicule;
+  const aDebiter = piecesADebiter();
+  if (!aDebiter.length) return null;
+
+  const doc = new PdfDoc();
+  doc.addPage();
+  let py = 12;
+  doc.text(MARGE, py + 5, winansi("LISTE DE PIÈCES"), 16, true, COUL.bleu);
+  doc.text(PAGE_W - MARGE, py + 5, winansi(f.nom), 9, true, COUL.gris, true);
+  py += 9;
+  doc.rect(MARGE, py, PAGE_W - 2 * MARGE, 0.5, COUL.bleu);
+  py += 5;
+  const resume = [v.immat && "Véhicule : " + v.immat, v.date && "Date : " + dateFR(v.date), v.controleur && "Contrôleur : " + v.controleur]
+    .filter(Boolean).join("     ");
+  if (resume) { doc.text(MARGE, py + 2, winansi(resume), 9, false, COUL.texte); py += 7; }
+  const st = { y: py };
+  tableau(doc, st, [14, 100, 76], ["N°", "Pièce", "Référence"],
+    aDebiter.map((p, i) => ({ cells: [{ t: String(i + 1) }, { t: p.nom }, { t: p.ref, gras: true }] })));
+
+  const n = doc.pages.length;
+  const pied = ["Liste de pièces", f.nom, v.immat].filter(Boolean).join(" · ");
   for (let i = 0; i < n; i++) {
     doc.cur = doc.pages[i];
     doc.text(MARGE, 291, winansi(pied), 7, false, COUL.gris);
@@ -270,20 +284,32 @@ function toast(msg) {
 async function exportPdf() {
   const f = curFiche();
   if (!f) { toast("Choisissez d'abord un type de contrôle."); return; }
-  let blob;
-  try { blob = construirePdf(); } catch (err) { toast("Impossible de créer le PDF : " + err.message); return; }
+  let checklistBlob, piecesBlob;
+  try {
+    checklistBlob = construireChecklistPdf();
+    piecesBlob = construirePiecesPdf();
+  } catch (err) { toast("Impossible de créer le PDF : " + err.message); return; }
+
   const slug = t => String(t || "").trim().replace(/[^\w-]+/g, "_").replace(/^_+|_+$/g, "");
-  const nom = ["controle", slug(f.nom), slug(state.vehicule.immat), state.vehicule.date].filter(Boolean).join("_") + ".pdf";
+  const suffixe = ["_" + slug(f.nom), state.vehicule.immat && "_" + slug(state.vehicule.immat), state.vehicule.date && "_" + state.vehicule.date]
+    .filter(Boolean).join("");
+  const fichiers = [{ nom: "controle" + suffixe + ".pdf", data: checklistBlob }];
+  if (piecesBlob) fichiers.push({ nom: "liste_pieces" + suffixe + ".pdf", data: piecesBlob });
+
   let dl = null;
   try { dl = window.claude?.use ? await window.claude.use("downloads") : null; } catch (e) { dl = null; }
   if (dl) {
-    try { await dl.save({ filename: nom, data: blob }); toast("PDF enregistré : " + nom); }
-    catch (e) { toast(e && e.code === "declined" ? "Enregistrement annulé." : "Enregistrement impossible (" + ((e && (e.message || e.code)) || "erreur") + ")."); }
+    try {
+      for (const fi of fichiers) await dl.save({ filename: fi.nom, data: fi.data });
+      toast(fichiers.length > 1 ? "PDF enregistrés : " + fichiers.map(fi => fi.nom).join(", ") : "PDF enregistré : " + fichiers[0].nom);
+    } catch (e) { toast(e && e.code === "declined" ? "Enregistrement annulé." : "Enregistrement impossible (" + ((e && (e.message || e.code)) || "erreur") + ")."); }
     return;
   }
-  const a = document.createElement("a");   // hors artefact : téléchargement classique
-  a.href = URL.createObjectURL(blob); a.download = nom;
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-  toast("PDF généré : " + nom);
+  fichiers.forEach(fi => {   // hors artefact : téléchargement classique
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(fi.data); a.download = fi.nom;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  });
+  toast(fichiers.length > 1 ? "PDF générés : " + fichiers.map(fi => fi.nom).join(", ") : "PDF généré : " + fichiers[0].nom);
 }
