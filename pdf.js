@@ -175,7 +175,7 @@ function construireChecklistPdf() {
 
   // Bloc véhicule
   const champs = [
-    ["Immatriculation", v.immat], ["N° de série (VIN)", v.vin], ["Marque", v.marque], ["Modèle", v.modele],
+    ["Immatriculation", v.immat], ["N° OR", v.vin], ["Marque", v.marque], ["Modèle", v.modele],
     ["Kilométrage", v.km ? v.km + " km" : ""], ["Date du contrôle", dateFR(v.date)], ["Contrôleur", v.controleur]
   ];
   const colW = (PAGE_W - 2 * MARGE) / 4;

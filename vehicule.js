@@ -1,7 +1,7 @@
 // Onglet 2 : « Véhicule »
 const VEHICULE_CHAMPS = [
   { id: "immat", label: "Immatriculation", type: "text", ph: "AB-123-CD" },
-  { id: "vin", label: "N° de série (VIN)", type: "text" },
+  { id: "vin", label: "N° OR", type: "text" },
   { id: "marque", label: "Marque", type: "text" },
   { id: "modele", label: "Modèle", type: "text" },
   { id: "km", label: "Kilométrage", type: "number", ph: "0" },
