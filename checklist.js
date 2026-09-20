@@ -192,8 +192,11 @@ function initChecklist() {
       const box = t.closest(".sugg");
       const ta = box.previousElementSibling;
       const base = ta.value.trimEnd();
-      ta.value = base.slice(0, base.length - Number(t.dataset.cut)) + texteInsere(piecesConnues()[Number(t.dataset.pick)]);
+      const piece = piecesConnues()[Number(t.dataset.pick)];
+      ta.value = base.slice(0, base.length - Number(t.dataset.cut)) + texteInsere(piece);
       ta.dispatchEvent(new Event("input", { bubbles: true }));   // enregistre dans l'état
+      state.selection[piece.id] = true;        // coche aussi la pièce dans « Pièces à débiter »
+      updatePiecesBadge();
       box.innerHTML = "";
       ta.focus();
       return;
