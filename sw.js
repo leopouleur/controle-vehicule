@@ -1,4 +1,4 @@
-const CACHE = "controle-vehicule-v16";
+const CACHE = "controle-vehicule-v17";
 const FILES = [
   "./", "index.html", "style.css", "fiches.js", "state.js", "rapports.js", "choix.js",
   "vehicule.js", "checklist.js", "catalogue.js", "pieces.js", "pdf-metrics.js", "pdf.js", "app.js", "manifest.json", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "logo.png"

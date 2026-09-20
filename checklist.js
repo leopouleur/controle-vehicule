@@ -50,9 +50,11 @@ function itemHTML(f, si, i) {
   const sec = f.sections[si];
   const key = si + ":" + i;
   const e = fdata().items[key] || {};
+  // PMS : « À faire » et « OK » sont deux cases indépendantes (les deux peuvent rester cochées).
+  const pms = sec.type === "pms";
   const btns = CHOIX[sec.type].map(c =>
-    `<button type="button" data-key="${key}" data-v="${c.v}" class="${e.v === c.v ? "sel" : ""}">${c.l}</button>`).join("");
-  const travaux = e.v && besoinTravaux(sec.type, e.v);
+    `<button type="button" data-key="${key}" data-v="${c.v}" class="${(pms ? e[c.v] : e.v === c.v) ? "sel" : ""}">${c.l}</button>`).join("");
+  const travaux = pms ? !!e.afaire : (e.v && besoinTravaux(sec.type, e.v));
 
   let extra = "";
   if (sec.type === "pms") {
@@ -116,6 +118,12 @@ function stats() {
   f.sections.forEach((sec, si) => {
     sec.items.forEach((_, i) => {
       const e = d.items[si + ":" + i] || {};
+      if (sec.type === "pms") {                  // « À faire » et « OK » comptent indépendamment
+        if (compte(sec)) { s.total++; if (e.afaire || e.ok) s.done++; }
+        if (e.ok) s.ok++;
+        if (e.afaire) { s.afaire++; s.aTraiter++; if (e.fin === "ok") s.fin++; }
+        return;
+      }
       if (compte(sec)) { s.total++; if (e.v) s.done++; }
       if (e.v) {
         if (e.v === "ok") s.ok++;
@@ -136,7 +144,10 @@ function updateAll() {
   const d = fdata();
   f.sections.forEach((sec, si) => {
     if (sec.type === "travaux") return;
-    const done = sec.items.filter((_, i) => d.items[si + ":" + i]?.v).length;
+    const done = sec.items.filter((_, i) => {
+      const e = d.items[si + ":" + i];
+      return sec.type === "pms" ? !!(e && (e.afaire || e.ok)) : !!e?.v;
+    }).length;
     const el = document.querySelector(`[data-count="${si}"]`);
     if (el) el.textContent = `${done}/${sec.items.length}`;
   });
@@ -203,9 +214,15 @@ function initChecklist() {
     }
     if (t.dataset.v) {                        // choix d'un état
       const [si, i] = t.dataset.key.split(":").map(Number);
+      const sec = f.sections[si];
       const e = d.items[t.dataset.key] || (d.items[t.dataset.key] = {});
-      e.v = e.v === t.dataset.v ? undefined : t.dataset.v;  // 2e clic = désélection
-      if (!e.v) e.fin = undefined;
+      if (sec.type === "pms") {                 // « À faire » et « OK » : cases indépendantes
+        e[t.dataset.v] = !e[t.dataset.v];
+        if (!e.afaire) e.fin = undefined;
+      } else {
+        e.v = e.v === t.dataset.v ? undefined : t.dataset.v;  // 2e clic = désélection
+        if (!e.v) e.fin = undefined;
+      }
       refreshItem(si, i);
       if (e.v === "ko") document.querySelector(`[data-note="${t.dataset.key}"]`)?.focus();  // saisie directe du commentaire
     } else if (t.dataset.fin) {               // fin de travaux

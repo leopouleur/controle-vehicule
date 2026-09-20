@@ -212,9 +212,17 @@ function construireChecklistPdf() {
     sec.items.forEach((nom, i) => {
       const e = d.items[si + ":" + i] || {};
       const com = [sec.type === "pms" && e.qty ? "Qté / viscosité : " + e.qty : "", (e.note || "").trim()].filter(Boolean).join(" — ");
+      let etat = "", couleurEtat;
+      if (sec.type === "pms") {                 // « À faire » et « OK » peuvent être cochés en même temps
+        etat = [e.afaire && LIBELLE.afaire, e.ok && LIBELLE.ok].filter(Boolean).join(" + ");
+        couleurEtat = e.afaire ? COULEUR_ETAT.afaire : COULEUR_ETAT.ok;
+      } else if (e.v) {
+        etat = LIBELLE[e.v];
+        couleurEtat = COULEUR_ETAT[e.v];
+      }
       const cells = [
         { t: nom },
-        { t: e.v ? LIBELLE[e.v] : "", gras: true, couleur: COULEUR_ETAT[e.v] }
+        { t: etat, gras: true, couleur: couleurEtat }
       ];
       if (f.finTravaux) cells.push({ t: e.fin === "ok" ? "OK" : e.fin === "nok" ? "PAS OK" : "", gras: true,
         couleur: e.fin === "ok" ? COUL.ok : COUL.ko });
