@@ -8,11 +8,12 @@
   --ok: #1e9e58;
   --warn: #e0900b;
   --ko: #d33a3a;
+  --lien: #1a56db;
 }
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #12171d; --card: #1b222b; --text: #e8edf2;
-    --muted: #93a0ae; --border: #2c3641; --primary: #ff6659;
+    --muted: #93a0ae; --border: #2c3641; --primary: #ff6659; --lien: #6ea8fe;
   }
 }
 [hidden] { display: none !important; }
@@ -132,6 +133,15 @@ details.cat .count { font-size: 12px; color: var(--muted); font-weight: 400; }
 .item textarea { margin-top: 8px; min-height: 54px; font-size: 14px; }
 .item .qty { margin-top: 8px; font-size: 14px; }
 textarea.ko-note:placeholder-shown { border-color: var(--ko); }
+.item .note-wrap { position: relative; margin-top: 8px; }
+.item .note-wrap textarea { margin-top: 0; position: relative; z-index: 1; background: transparent; color: transparent; caret-color: var(--text); }
+.item .note-wrap textarea::placeholder { color: var(--muted); }
+.note-hl {
+  position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
+  white-space: pre-wrap; word-wrap: break-word; font: inherit; font-size: 14px;
+  padding: 10px; border: 1px solid transparent; border-radius: 8px; color: var(--text);
+}
+.piece-trouvee { color: var(--lien); font-weight: 600; }
 .warn-line { margin-top: 8px; font-size: 13px; font-weight: 600; color: var(--ko); }
 .sugg { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .sugg:empty { display: none; }

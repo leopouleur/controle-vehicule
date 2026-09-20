@@ -35,15 +35,35 @@ function suggestions(text) {
   });
   return res.sort((a, b) => a.pref - b.pref).slice(0, 6);
 }
-function texteInsere(p) { return p.ref.trim() ? `${p.nom} (réf. ${p.ref.trim()})` : p.nom; }
+function texteInsere(p) { return p.nom; }   // pas de référence dans le texte inséré
 
 function showSugg(ta) {
-  const box = ta.nextElementSibling;
+  const box = ta.closest(".note-wrap")?.nextElementSibling;
   if (!box || !box.classList.contains("sugg")) return;
   box.innerHTML = suggestions(ta.value).map(m => {
     const p = piecesConnues()[m.i];
     return `<button type="button" data-pick="${m.i}" data-cut="${m.cut}">🔧 ${esc(p.nom)}${p.ref ? ` <small>· ${esc(p.ref)}</small>` : ""}</button>`;
   }).join("");
+}
+
+// --- Surlignage des pièces déjà « à débiter » dans le texte d'un commentaire ---
+function surlignerPieces(texte) {
+  const t = String(texte ?? "");
+  if (!t) return "";
+  const noms = [...new Set(piecesADebiter().map(p => p.nom.trim()).filter(Boolean))]
+    .sort((a, b) => b.length - a.length);   // les noms les plus longs d'abord (évite qu'un nom court en coupe un plus long)
+  if (!noms.length) return esc(t);
+  const motif = new RegExp("(" + noms.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")", "gi");
+  let out = "", pos = 0, m;
+  while ((m = motif.exec(t))) {
+    out += esc(t.slice(pos, m.index)) + `<span class="piece-trouvee">${esc(m[0])}</span>`;
+    pos = motif.lastIndex;
+  }
+  return out + esc(t.slice(pos));
+}
+function rafraichirSurlignage(ta) {
+  const hl = ta.closest(".note-wrap")?.querySelector(".note-hl");
+  if (hl) hl.innerHTML = surlignerPieces(ta.value);
 }
 
 function itemHTML(f, si, i) {
@@ -68,7 +88,7 @@ function itemHTML(f, si, i) {
   const ko = e.v === "ko";
   const noteVisible = travaux || e.note || e.open || ko;
   extra += noteVisible
-    ? `<textarea data-note="${key}" class="${ko ? "ko-note" : ""}" placeholder="${ko ? "Commentaire sur le défaut (KO)…" : "Commentaires…"}">${esc(e.note)}</textarea><div class="sugg"></div>`
+    ? `<div class="note-wrap"><div class="note-hl" aria-hidden="true">${surlignerPieces(e.note)}</div><textarea data-note="${key}" class="${ko ? "ko-note" : ""}" placeholder="${ko ? "Commentaire sur le défaut (KO)…" : "Commentaires…"}">${esc(e.note)}</textarea></div><div class="sugg"></div>`
     : `<button type="button" class="link" data-addnote="${key}">+ Commentaire</button>`;
 
   return `<div class="item" id="it-${si}-${i}"><div class="name">${esc(sec.items[i])}</div>
@@ -90,7 +110,7 @@ function renderChecklist() {
   const secs = f.sections.map((sec, si) => {
     let corps;
     if (sec.type === "travaux") {
-      corps = `<div class="item"><textarea data-travaux placeholder="Décrire les travaux supplémentaires…">${esc(d.travaux)}</textarea><div class="sugg"></div></div>`;
+      corps = `<div class="item"><div class="note-wrap"><div class="note-hl" aria-hidden="true">${surlignerPieces(d.travaux)}</div><textarea data-travaux placeholder="Décrire les travaux supplémentaires…">${esc(d.travaux)}</textarea></div><div class="sugg"></div></div>`;
     } else {
       corps = sec.items.map((_, i) => itemHTML(f, si, i)).join("");
     }
@@ -201,12 +221,12 @@ function initChecklist() {
 
     if (t.dataset.pick) {                     // insertion d'une pièce suggérée
       const box = t.closest(".sugg");
-      const ta = box.previousElementSibling;
+      const ta = box.previousElementSibling.querySelector("textarea");
       const base = ta.value.trimEnd();
       const piece = piecesConnues()[Number(t.dataset.pick)];
       ta.value = base.slice(0, base.length - Number(t.dataset.cut)) + texteInsere(piece);
-      ta.dispatchEvent(new Event("input", { bubbles: true }));   // enregistre dans l'état
-      state.selection[piece.id] = true;        // coche aussi la pièce dans « Pièces à débiter »
+      state.selection[piece.id] = true;        // coche aussi la pièce dans « Pièces à débiter » (avant le surlignage)
+      ta.dispatchEvent(new Event("input", { bubbles: true }));   // enregistre dans l'état + surligne
       updatePiecesBadge();
       box.innerHTML = "";
       ta.focus();
@@ -254,8 +274,15 @@ function initChecklist() {
     if (el.dataset.note) { (d.items[el.dataset.note] ||= {}).note = el.value; updateAll(); }
     else if (el.dataset.qty) (d.items[el.dataset.qty] ||= {}).qty = el.value;
     else if ("travaux" in el.dataset) d.travaux = el.value;
-    if (el.tagName === "TEXTAREA") showSugg(el);
+    if (el.tagName === "TEXTAREA") { showSugg(el); rafraichirSurlignage(el); }
   });
+
+  // Le surlignage doit suivre le défilement du texte dans la zone de commentaire.
+  root.addEventListener("scroll", ev => {
+    const ta = ev.target; if (ta.tagName !== "TEXTAREA") return;
+    const hl = ta.closest(".note-wrap")?.querySelector(".note-hl");
+    if (hl) { hl.scrollTop = ta.scrollTop; hl.scrollLeft = ta.scrollLeft; }
+  }, true);
 
   root.addEventListener("toggle", ev => {
     const det = ev.target;
