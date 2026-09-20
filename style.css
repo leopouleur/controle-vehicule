@@ -179,7 +179,8 @@ button.link { background: none; border: 0; color: var(--primary); font-size: 13p
 .grp h3 { margin: 16px 0 4px; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 .cat-row, .sel-row { display: grid; align-items: center; gap: 10px; padding: 9px 6px; border-top: 1px solid var(--border); cursor: pointer; }
 .cat-row { grid-template-columns: 22px 1fr auto; color: var(--text); font-size: 15px; margin: 0; }
-.sel-row { grid-template-columns: 1fr auto auto; cursor: default; }
+.sel-row { grid-template-columns: 1fr auto auto auto; cursor: default; }
+.sel-row .qte { width: 56px; padding: 8px 4px; text-align: center; font-size: 15px; }
 .cat-row:has(input:checked) { background: color-mix(in srgb, var(--primary) 10%, var(--card)); }
 .cat-row input { width: 20px; height: 20px; padding: 0; accent-color: var(--primary); }
 .cn { font-size: 15px; }
@@ -221,7 +222,8 @@ button.link { background: none; border: 0; color: var(--primary); font-size: 13p
 .grp h3 { margin: 16px 0 4px; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 .cat-row, .sel-row { display: grid; align-items: center; gap: 10px; padding: 9px 6px; border-top: 1px solid var(--border); cursor: pointer; }
 .cat-row { grid-template-columns: 22px 1fr auto; color: var(--text); font-size: 15px; margin: 0; }
-.sel-row { grid-template-columns: 1fr auto auto; cursor: default; }
+.sel-row { grid-template-columns: 1fr auto auto auto; cursor: default; }
+.sel-row .qte { width: 56px; padding: 8px 4px; text-align: center; font-size: 15px; }
 .cat-row:has(input:checked) { background: color-mix(in srgb, var(--primary) 10%, var(--card)); }
 .cat-row input { width: 20px; height: 20px; padding: 0; accent-color: var(--primary); }
 .cn { font-size: 15px; }

@@ -18,6 +18,8 @@ function aDebiterHTML() {
   return cochees.map(p => `
     <div class="sel-row">
       <span class="cn">${esc(p.nom)}</span>${refHTML(p.ref)}
+      <input type="number" class="qte" data-qte="${p.id}" min="1" inputmode="numeric" placeholder="Qté"
+        value="${esc(state.qtePieces[p.id] || "")}" aria-label="Quantité pour ${esc(p.nom)}">
       <button type="button" class="del" data-unsel="${p.id}" aria-label="Retirer ${esc(p.nom)}">✕</button>
     </div>`).join("");
 }
@@ -95,8 +97,14 @@ function renderPieces() {
   document.getElementById("a-debiter").addEventListener("click", ev => {
     const b = ev.target.closest("[data-unsel]"); if (!b) return;
     delete state.selection[b.dataset.unsel];
+    delete state.qtePieces[b.dataset.unsel];
     const cb = document.getElementById("c-" + b.dataset.unsel); if (cb) cb.checked = false;
     refreshADebiter();
+  });
+  document.getElementById("a-debiter").addEventListener("input", ev => {
+    const id = ev.target.dataset.qte; if (!id) return;
+    const v = ev.target.value.trim();
+    if (v) state.qtePieces[id] = v; else delete state.qtePieces[id];
   });
   const cat = document.getElementById("catalogue");
 
@@ -104,7 +112,8 @@ function renderPieces() {
     // --- Utilisation normale : cocher, chercher, déverrouiller
     cat.addEventListener("change", ev => {
       const id = ev.target.dataset.id; if (!id) return;
-      if (ev.target.checked) state.selection[id] = true; else delete state.selection[id];
+      if (ev.target.checked) state.selection[id] = true;
+      else { delete state.selection[id]; delete state.qtePieces[id]; }
       refreshADebiter();
     });
     document.getElementById("cat-search").addEventListener("input", ev => {
@@ -157,7 +166,7 @@ function renderPieces() {
       setTimeout(() => { if (b.isConnected) { delete b.dataset.arme; b.textContent = "✕"; b.classList.remove("arme"); } }, 3000);
       return;
     }
-    CATALOGUE = CATALOGUE.filter(x => x.id !== p.id); delete state.selection[p.id];
+    CATALOGUE = CATALOGUE.filter(x => x.id !== p.id); delete state.selection[p.id]; delete state.qtePieces[p.id];
     avertir(sauverCatalogue()); renderPieces();
   });
   const origine = document.getElementById("btn-origine");
@@ -168,7 +177,7 @@ function renderPieces() {
       return;
     }
     CATALOGUE = CATALOGUE_ORIGINE.map(p => ({ ...p }));
-    Object.keys(state.selection).forEach(id => { if (!CATALOGUE.some(p => p.id === id)) delete state.selection[id]; });
+    Object.keys(state.selection).forEach(id => { if (!CATALOGUE.some(p => p.id === id)) { delete state.selection[id]; delete state.qtePieces[id]; } });
     avertir(sauverCatalogue()); renderPieces(); toast("Catalogue d'origine rétabli.");
   });
 }

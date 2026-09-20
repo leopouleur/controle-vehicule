@@ -269,8 +269,8 @@ function construirePiecesPdf() {
     .filter(Boolean).join("     ");
   if (resume) { doc.text(MARGE, py + 2, winansi(resume), 9, false, COUL.texte); py += 7; }
   const st = { y: py };
-  tableau(doc, st, [14, 100, 76], ["N°", "Pièce", "Référence"],
-    aDebiter.map((p, i) => ({ cells: [{ t: String(i + 1) }, { t: p.nom }, { t: p.ref, gras: true }] })));
+  tableau(doc, st, [14, 82, 64, 30], ["N°", "Pièce", "Référence", "Qté"],
+    aDebiter.map((p, i) => ({ cells: [{ t: String(i + 1) }, { t: p.nom }, { t: p.ref, gras: true }, { t: state.qtePieces[p.id] || "" }] })));
 
   const n = doc.pages.length;
   const pied = ["Liste de pièces", f.nom, v.immat].filter(Boolean).join(" · ");
