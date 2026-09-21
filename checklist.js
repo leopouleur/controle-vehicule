@@ -66,6 +66,25 @@ function rafraichirSurlignage(ta) {
   if (hl) hl.innerHTML = surlignerPieces(ta.value);
 }
 
+// --- Pièces à commander : tout commentaire non vide qui ne cite aucune pièce déjà « à débiter » ---
+function aPieceReconnue(texte) {
+  return surlignerPieces(texte).includes('class="piece-trouvee"');
+}
+function estACommander(texte) {
+  const t = String(texte ?? "").trim();
+  return !!t && !aPieceReconnue(t);
+}
+function commandeHTML(cle, texte) {
+  return `<div class="commande-qte" data-commande="${cle}" ${estACommander(texte) ? "" : "hidden"}>
+    <input type="number" class="qty" data-qte-commande="${cle}" min="1" inputmode="numeric"
+      placeholder="Quantité à commander" value="${esc(state.qteCommande[cle] || "")}">
+  </div>`;
+}
+function rafraichirCommande(cle, texte) {
+  const div = document.querySelector(`[data-commande="${cle}"]`);
+  if (div) div.hidden = !estACommander(texte);
+}
+
 function itemHTML(f, si, i) {
   const sec = f.sections[si];
   const key = si + ":" + i;
@@ -88,7 +107,7 @@ function itemHTML(f, si, i) {
   const ko = e.v === "ko";
   const noteVisible = travaux || e.note || e.open || ko;
   extra += noteVisible
-    ? `<div class="note-wrap"><div class="note-hl" aria-hidden="true">${surlignerPieces(e.note)}</div><textarea data-note="${key}" class="${ko ? "ko-note" : ""}" placeholder="${ko ? "Commentaire sur le défaut (KO)…" : "Commentaires…"}">${esc(e.note)}</textarea></div><div class="sugg"></div>`
+    ? `<div class="note-wrap"><div class="note-hl" aria-hidden="true">${surlignerPieces(e.note)}</div><textarea data-note="${key}" class="${ko ? "ko-note" : ""}" placeholder="${ko ? "Commentaire sur le défaut (KO)…" : "Commentaires…"}">${esc(e.note)}</textarea></div><div class="sugg"></div>${commandeHTML(key, e.note)}`
     : `<button type="button" class="link" data-addnote="${key}">+ Commentaire</button>`;
 
   return `<div class="item" id="it-${si}-${i}"><div class="name">${esc(sec.items[i])}</div>
@@ -110,7 +129,7 @@ function renderChecklist() {
   const secs = f.sections.map((sec, si) => {
     let corps;
     if (sec.type === "travaux") {
-      corps = `<div class="item"><div class="note-wrap"><div class="note-hl" aria-hidden="true">${surlignerPieces(d.travaux)}</div><textarea data-travaux placeholder="Décrire les travaux supplémentaires…">${esc(d.travaux)}</textarea></div><div class="sugg"></div></div>`;
+      corps = `<div class="item"><div class="note-wrap"><div class="note-hl" aria-hidden="true">${surlignerPieces(d.travaux)}</div><textarea data-travaux placeholder="Décrire les travaux supplémentaires…">${esc(d.travaux)}</textarea></div><div class="sugg"></div>${commandeHTML("travaux", d.travaux)}</div>`;
     } else {
       corps = sec.items.map((_, i) => itemHTML(f, si, i)).join("");
     }
@@ -271,9 +290,13 @@ function initChecklist() {
 
   root.addEventListener("input", ev => {
     const el = ev.target, d = fdata();
-    if (el.dataset.note) { (d.items[el.dataset.note] ||= {}).note = el.value; updateAll(); }
+    if (el.dataset.note) { (d.items[el.dataset.note] ||= {}).note = el.value; updateAll(); rafraichirCommande(el.dataset.note, el.value); }
     else if (el.dataset.qty) (d.items[el.dataset.qty] ||= {}).qty = el.value;
-    else if ("travaux" in el.dataset) d.travaux = el.value;
+    else if ("travaux" in el.dataset) { d.travaux = el.value; rafraichirCommande("travaux", el.value); }
+    else if (el.dataset.qteCommande) {
+      const v = el.value.trim();
+      if (v) state.qteCommande[el.dataset.qteCommande] = v; else delete state.qteCommande[el.dataset.qteCommande];
+    }
     if (el.tagName === "TEXTAREA") { showSugg(el); rafraichirSurlignage(el); }
   });
 

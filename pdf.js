@@ -324,6 +324,52 @@ function construirePiecesPdf() {
   return doc.build();
 }
 
+// --- PDF « Pièces à commander » : commentaires non vides qui ne citent aucune pièce déjà « à débiter » ---
+function construireCommandePdf() {
+  const f = curFiche(), d = fdata(), v = state.vehicule;
+  const lignes = [];
+  f.sections.forEach((sec, si) => {
+    if (sec.type === "travaux") {
+      if (estACommander(d.travaux)) lignes.push({ cle: "travaux", texte: (d.travaux || "").trim() });
+      return;
+    }
+    sec.items.forEach((_, i) => {
+      const e = d.items[si + ":" + i] || {};
+      if (estACommander(e.note)) lignes.push({ cle: si + ":" + i, texte: (e.note || "").trim() });
+    });
+  });
+  if (!lignes.length) return null;
+
+  const doc = new PdfDoc();
+  doc.addPage();
+  let py = 12;
+  doc.text(MARGE, py + 5, winansi("PIÈCES À COMMANDER"), 16, true, COUL.accent);
+  doc.text(PAGE_W - MARGE, py + 5, winansi(f.nom), 9, true, COUL.gris, true);
+  py += 9;
+  doc.rect(MARGE, py, PAGE_W - 2 * MARGE, 0.5, COUL.accent);
+  py += 5;
+  const resume = [v.immat && "Véhicule : " + v.immat, v.date && "Date : " + dateFR(v.date),
+    v.controleur && "Contrôleur : " + v.controleur, v.orMagasin && "N° OR : " + v.orMagasin]
+    .filter(Boolean).join("     ");
+  if (resume) { doc.text(MARGE, py + 2, winansi(resume), 9, false, COUL.texte); py += 7; }
+
+  const st = { y: py };
+  tableau(doc, st, [26, 164], ["Quantité", "Dénomination"],
+    lignes.map(l => ({ cells: [
+      { t: state.qteCommande[l.cle] || "1", gras: true, couleur: COUL.accent },
+      { t: l.texte }
+    ] })));
+
+  const n = doc.pages.length;
+  const pied = ["Pièces à commander", f.nom, v.immat].filter(Boolean).join(" · ");
+  for (let i = 0; i < n; i++) {
+    doc.cur = doc.pages[i];
+    doc.text(MARGE, 291, winansi(pied), 7, false, COUL.gris);
+    doc.text(PAGE_W - MARGE, 291, winansi(`Page ${i + 1}/${n}`), 7, false, COUL.gris, true);
+  }
+  return doc.build();
+}
+
 // --- Livraison du fichier -----------------------------------------------------
 function toast(msg) {
   const el = document.getElementById("toast");
@@ -334,10 +380,11 @@ function toast(msg) {
 async function exportPdf() {
   const f = curFiche();
   if (!f) { toast("Choisissez d'abord un type de contrôle."); return; }
-  let checklistBlob, piecesBlob;
+  let checklistBlob, piecesBlob, commandeBlob;
   try {
     checklistBlob = construireChecklistPdf();
     piecesBlob = construirePiecesPdf();
+    commandeBlob = construireCommandePdf();
   } catch (err) { toast("Impossible de créer le PDF : " + err.message); return; }
 
   const slug = t => String(t || "").trim().replace(/[^\w-]+/g, "_").replace(/^_+|_+$/g, "");
@@ -345,6 +392,7 @@ async function exportPdf() {
     .filter(Boolean).join("");
   const fichiers = [{ nom: "controle" + suffixe + ".pdf", data: checklistBlob }];
   if (piecesBlob) fichiers.push({ nom: "liste_pieces" + suffixe + ".pdf", data: piecesBlob });
+  if (commandeBlob) fichiers.push({ nom: "pieces_a_commander" + suffixe + ".pdf", data: commandeBlob });
 
   let dl = null;
   try { dl = window.claude?.use ? await window.claude.use("downloads") : null; } catch (e) { dl = null; }

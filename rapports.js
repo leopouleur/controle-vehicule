@@ -18,7 +18,8 @@ function sauverRapportCourant() {
   const tous = chargerRapports();
   tous[state.rapportId] = {
     id: state.rapportId, fiche: state.fiche,
-    vehicule: state.vehicule, selection: state.selection, qtePieces: state.qtePieces, data: state.data,
+    vehicule: state.vehicule, selection: state.selection, qtePieces: state.qtePieces,
+    qteCommande: state.qteCommande, data: state.data,
     majLe: Date.now(),
     exporteLe: tous[state.rapportId]?.exporteLe || null
   };
@@ -53,6 +54,7 @@ function nouveauRapport() {
   state.data = {};
   state.selection = {};
   state.qtePieces = {};
+  state.qteCommande = {};
   state.admin = false;
   state.rapportId = null;
   openCats.clear();
@@ -66,6 +68,7 @@ function reprendreRapport(id) {
   state.vehicule = r.vehicule || {};
   state.selection = r.selection || {};
   state.qtePieces = r.qtePieces || {};
+  state.qteCommande = r.qteCommande || {};
   state.data = r.data || {};
   state.admin = false;
   openCats.clear();
