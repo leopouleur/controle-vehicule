@@ -5,6 +5,7 @@ const state = {
   selection: {},   // pièces du catalogue cochées : { id: true }
   qtePieces: {},   // quantité saisie pour une pièce à débiter : { id: "2" }
   qteCommande: {}, // quantité saisie pour un commentaire « à commander » : { "si:i" ou "travaux": "2" }
+  commandeManuelle: [], // pièces à commander ajoutées à la main : [{ id, texte, qte }]
   admin: false,    // mode modification du catalogue (déverrouillé par mot de passe)    // infos du véhicule (partagées entre fiches)
   data: {},        // ficheId -> { items: { "sec:idx": {v, note, qty, fin, open} }, travaux: "" }
   rapportId: null  // id du rapport en cours dans la mémoire des rapports (rapports.js), une fois une fiche choisie

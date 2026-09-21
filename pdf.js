@@ -324,19 +324,24 @@ function construirePiecesPdf() {
   return doc.build();
 }
 
-// --- PDF « Pièces à commander » : commentaires non vides qui ne citent aucune pièce déjà « à débiter » ---
+// --- PDF « Pièces à commander » : commentaires non vides qui ne citent aucune pièce déjà « à débiter »,
+// plus les pièces ajoutées à la main dans l'onglet « Pièces à commander » ---
 function construireCommandePdf() {
   const f = curFiche(), d = fdata(), v = state.vehicule;
   const lignes = [];
   f.sections.forEach((sec, si) => {
     if (sec.type === "travaux") {
-      if (estACommander("travaux", d.travaux)) lignes.push({ cle: "travaux", texte: (d.travaux || "").trim() });
+      if (estACommander("travaux", d.travaux)) lignes.push({ qte: state.qteCommande.travaux || "1", texte: (d.travaux || "").trim() });
       return;
     }
     sec.items.forEach((_, i) => {
       const e = d.items[si + ":" + i] || {};
-      if (estACommander(si + ":" + i, e.note)) lignes.push({ cle: si + ":" + i, texte: (e.note || "").trim() });
+      if (estACommander(si + ":" + i, e.note)) lignes.push({ qte: state.qteCommande[si + ":" + i] || "1", texte: (e.note || "").trim() });
     });
+  });
+  state.commandeManuelle.forEach(m => {
+    const texte = (m.texte || "").trim();
+    if (texte) lignes.push({ qte: m.qte || "1", texte });
   });
   if (!lignes.length) return null;
 
@@ -356,7 +361,7 @@ function construireCommandePdf() {
   const st = { y: py };
   tableau(doc, st, [26, 164], ["Quantité", "Dénomination"],
     lignes.map(l => ({ cells: [
-      { t: state.qteCommande[l.cle] || "1", gras: true, couleur: COUL.accent },
+      { t: l.qte, gras: true, couleur: COUL.accent },
       { t: l.texte }
     ] })));
 

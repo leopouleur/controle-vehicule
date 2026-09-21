@@ -1,7 +1,7 @@
-const CACHE = "controle-vehicule-v24";
+const CACHE = "controle-vehicule-v25";
 const FILES = [
   "./", "index.html", "style.css", "fiches.js", "state.js", "rapports.js", "choix.js",
-  "vehicule.js", "checklist.js", "catalogue.js", "pieces.js", "pdf-metrics.js", "pdf.js", "app.js", "manifest.json", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "logo.png"
+  "vehicule.js", "checklist.js", "catalogue.js", "pieces.js", "commande.js", "pdf-metrics.js", "pdf.js", "app.js", "manifest.json", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "logo.png"
 ];
 
 self.addEventListener("install", e => {
