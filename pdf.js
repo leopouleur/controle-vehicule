@@ -265,12 +265,54 @@ function construirePiecesPdf() {
   py += 9;
   doc.rect(MARGE, py, PAGE_W - 2 * MARGE, 0.5, COUL.accent);
   py += 5;
-  const resume = [v.immat && "Véhicule : " + v.immat, v.date && "Date : " + dateFR(v.date), v.controleur && "Contrôleur : " + v.controleur]
+  const resume = [v.immat && "Véhicule : " + v.immat, v.date && "Date : " + dateFR(v.date),
+    v.controleur && "Contrôleur : " + v.controleur, v.orMagasin && "N° OR : " + v.orMagasin]
     .filter(Boolean).join("     ");
-  if (resume) { doc.text(MARGE, py + 2, winansi(resume), 9, false, COUL.texte); py += 7; }
-  const st = { y: py };
-  tableau(doc, st, [96, 64, 30], ["Pièce", "Référence", "Demandé"],
-    aDebiter.map(p => ({ cells: [{ t: p.nom }, { t: p.ref, gras: true }, { t: state.qtePieces[p.id] || "1" }] })));
+  if (resume) { doc.text(MARGE, py + 2, winansi(resume), 9, false, COUL.texte); py += 8; }
+
+  // Présentation façon feuille papier « PIECES », en grille façon tableur : case à cocher, quantité demandée,
+  // puis une grande colonne référence + dénomination de la pièce — sur deux colonnes de page.
+  const GOUTTIERE = 8, CASE_W = 8, TAILLE_L = 9, INTERLIGNE_L = 4, PAD_L = 1.8;
+  const colW = (PAGE_W - 2 * MARGE - GOUTTIERE) / 2;
+  const grandeColW = colW - 2 * CASE_W;
+
+  const mesures = aDebiter.map(p => {
+    const nom = winansi(p.nom), ref = winansi(p.ref || "");
+    const wNom = largeur(nom, TAILLE_L, false);
+    const wRef = ref ? largeur(ref, TAILLE_L, true) : 0;
+    const dispo = grandeColW - 3;
+    const uneLigne = !ref || wNom + 2 + wRef <= dispo;
+    const lignes = uneLigne ? [{ nom, ref }] : [{ nom, ref: "" }, { nom: "", ref }];
+    return { p, demande: state.qtePieces[p.id] || "1", lignes, h: Math.max(7, lignes.length * INTERLIGNE_L + 2 * PAD_L) };
+  });
+
+  // Répartit les pièces entre les deux colonnes à hauteur égale (comme la feuille papier).
+  const totalH = mesures.reduce((s, m) => s + m.h, 0);
+  let hGauche = 0, coupure = mesures.length;
+  for (let i = 0; i < mesures.length; i++) {
+    if (i > 0 && hGauche + mesures[i].h > totalH / 2) { coupure = i; break; }
+    hGauche += mesures[i].h;
+  }
+  const colonnes = [mesures.slice(0, coupure), mesures.slice(coupure)];
+
+  colonnes.forEach((liste, ci) => {
+    const x = MARGE + ci * (colW + GOUTTIERE);
+    let y = py;
+    liste.forEach(m => {
+      doc.rect(x, y, CASE_W, m.h, null, COUL.trait);                       // case à cocher (vide)
+      doc.rect(x + CASE_W, y, CASE_W, m.h, null, COUL.trait);              // quantité demandée
+      doc.rect(x + 2 * CASE_W, y, grandeColW, m.h, null, COUL.trait);      // référence + dénomination
+      doc.text(x + 2 * CASE_W - 1.5, y + (m.h + TAILLE_L * 0.35) / 2, winansi(m.demande), TAILLE_L, true, COUL.accent, true);
+      m.lignes.forEach((l, k) => {
+        const yTxt = y + PAD_L + k * INTERLIGNE_L + 2.6;
+        let xx = x + 2 * CASE_W + 1.5;
+        if (l.nom) { doc.text(xx, yTxt, l.nom, TAILLE_L, false, COUL.texte); xx += largeur(l.nom, TAILLE_L, false) + 2; }
+        if (l.ref) doc.text(xx, yTxt, l.ref, TAILLE_L, true, COUL.texte);
+      });
+      y += m.h;
+    });
+  });
+  py += Math.max(...colonnes.map(l => l.reduce((s, m) => s + m.h, 0)));
 
   const n = doc.pages.length;
   const pied = ["Liste de pièces", f.nom, v.immat].filter(Boolean).join(" · ");
