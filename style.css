@@ -142,6 +142,7 @@ textarea.ko-note:placeholder-shown { border-color: var(--ko); }
   padding: 10px; border: 1px solid transparent; border-radius: 8px; color: var(--text);
 }
 .piece-trouvee { color: var(--lien); font-weight: 600; }
+.note-verte { color: var(--ok); font-weight: 600; }
 .warn-line { margin-top: 8px; font-size: 13px; font-weight: 600; color: var(--ko); }
 .sugg { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .sugg:empty { display: none; }

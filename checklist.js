@@ -61,28 +61,47 @@ function surlignerPieces(texte) {
   }
   return out + esc(t.slice(pos));
 }
+// --- Points « Contrôle niveau » et « Entretien selon PMS » : commentaire toujours en vert, jamais une pièce à commander ---
+function estInfoVerte(cle) {
+  if (!cle || cle === "travaux") return false;
+  const f = curFiche();
+  const [si, i] = cle.split(":").map(Number);
+  const sec = f && f.sections[si];
+  if (!sec) return false;
+  if (sec.type === "pms") return true;
+  const nom = sec.items && sec.items[i];
+  return !!nom && norm(nom).includes("controle niveau");
+}
+function noteHL(cle, texte) {
+  const t = String(texte ?? "");
+  if (!t) return "";
+  return estInfoVerte(cle) ? `<span class="note-verte">${esc(t)}</span>` : surlignerPieces(t);
+}
 function rafraichirSurlignage(ta) {
   const hl = ta.closest(".note-wrap")?.querySelector(".note-hl");
-  if (hl) hl.innerHTML = surlignerPieces(ta.value);
+  if (!hl) return;
+  const cle = ta.dataset.note || ("travaux" in ta.dataset ? "travaux" : null);
+  hl.innerHTML = noteHL(cle, ta.value);
 }
 
-// --- Pièces à commander : tout commentaire non vide qui ne cite aucune pièce déjà « à débiter » ---
+// --- Pièces à commander : tout commentaire non vide qui ne cite aucune pièce déjà « à débiter »
+// (et qui n'est pas un point « Contrôle niveau », toujours exclu de cette liste) ---
 function aPieceReconnue(texte) {
   return surlignerPieces(texte).includes('class="piece-trouvee"');
 }
-function estACommander(texte) {
+function estACommander(cle, texte) {
   const t = String(texte ?? "").trim();
-  return !!t && !aPieceReconnue(t);
+  return !!t && !aPieceReconnue(t) && !estInfoVerte(cle);
 }
 function commandeHTML(cle, texte) {
-  return `<div class="commande-qte" data-commande="${cle}" ${estACommander(texte) ? "" : "hidden"}>
+  return `<div class="commande-qte" data-commande="${cle}" ${estACommander(cle, texte) ? "" : "hidden"}>
     <input type="number" class="qty" data-qte-commande="${cle}" min="1" inputmode="numeric"
       placeholder="Quantité à commander" value="${esc(state.qteCommande[cle] || "")}">
   </div>`;
 }
 function rafraichirCommande(cle, texte) {
   const div = document.querySelector(`[data-commande="${cle}"]`);
-  if (div) div.hidden = !estACommander(texte);
+  if (div) div.hidden = !estACommander(cle, texte);
 }
 
 function itemHTML(f, si, i) {
@@ -107,7 +126,7 @@ function itemHTML(f, si, i) {
   const ko = e.v === "ko";
   const noteVisible = travaux || e.note || e.open || ko;
   extra += noteVisible
-    ? `<div class="note-wrap"><div class="note-hl" aria-hidden="true">${surlignerPieces(e.note)}</div><textarea data-note="${key}" class="${ko ? "ko-note" : ""}" placeholder="${ko ? "Commentaire sur le défaut (KO)…" : "Commentaires…"}">${esc(e.note)}</textarea></div><div class="sugg"></div>${commandeHTML(key, e.note)}`
+    ? `<div class="note-wrap"><div class="note-hl" aria-hidden="true">${noteHL(key, e.note)}</div><textarea data-note="${key}" class="${ko ? "ko-note" : ""}" placeholder="${ko ? "Commentaire sur le défaut (KO)…" : "Commentaires…"}">${esc(e.note)}</textarea></div><div class="sugg"></div>${commandeHTML(key, e.note)}`
     : `<button type="button" class="link" data-addnote="${key}">+ Commentaire</button>`;
 
   return `<div class="item" id="it-${si}-${i}"><div class="name">${esc(sec.items[i])}</div>
@@ -129,7 +148,7 @@ function renderChecklist() {
   const secs = f.sections.map((sec, si) => {
     let corps;
     if (sec.type === "travaux") {
-      corps = `<div class="item"><div class="note-wrap"><div class="note-hl" aria-hidden="true">${surlignerPieces(d.travaux)}</div><textarea data-travaux placeholder="Décrire les travaux supplémentaires…">${esc(d.travaux)}</textarea></div><div class="sugg"></div>${commandeHTML("travaux", d.travaux)}</div>`;
+      corps = `<div class="item"><div class="note-wrap"><div class="note-hl" aria-hidden="true">${noteHL("travaux", d.travaux)}</div><textarea data-travaux placeholder="Décrire les travaux supplémentaires…">${esc(d.travaux)}</textarea></div><div class="sugg"></div>${commandeHTML("travaux", d.travaux)}</div>`;
     } else {
       corps = sec.items.map((_, i) => itemHTML(f, si, i)).join("");
     }

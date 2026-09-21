@@ -251,7 +251,7 @@ function construireChecklistPdf() {
   return doc.build();
 }
 
-// --- PDF « Liste de pièces » : document séparé, uniquement s'il y a des pièces cochées ---
+// --- PDF « Pièces à débiter » : document séparé, uniquement s'il y a des pièces cochées ---
 function construirePiecesPdf() {
   const f = curFiche(), v = state.vehicule;
   const aDebiter = piecesADebiter();
@@ -260,7 +260,7 @@ function construirePiecesPdf() {
   const doc = new PdfDoc();
   doc.addPage();
   let py = 12;
-  doc.text(MARGE, py + 5, winansi("LISTE DE PIÈCES"), 16, true, COUL.accent);
+  doc.text(MARGE, py + 5, winansi("PIÈCES À DÉBITER"), 16, true, COUL.accent);
   doc.text(PAGE_W - MARGE, py + 5, winansi(f.nom), 9, true, COUL.gris, true);
   py += 9;
   doc.rect(MARGE, py, PAGE_W - 2 * MARGE, 0.5, COUL.accent);
@@ -315,7 +315,7 @@ function construirePiecesPdf() {
   py += Math.max(...colonnes.map(l => l.reduce((s, m) => s + m.h, 0)));
 
   const n = doc.pages.length;
-  const pied = ["Liste de pièces", f.nom, v.immat].filter(Boolean).join(" · ");
+  const pied = ["Pièces à débiter", f.nom, v.immat].filter(Boolean).join(" · ");
   for (let i = 0; i < n; i++) {
     doc.cur = doc.pages[i];
     doc.text(MARGE, 291, winansi(pied), 7, false, COUL.gris);
@@ -330,12 +330,12 @@ function construireCommandePdf() {
   const lignes = [];
   f.sections.forEach((sec, si) => {
     if (sec.type === "travaux") {
-      if (estACommander(d.travaux)) lignes.push({ cle: "travaux", texte: (d.travaux || "").trim() });
+      if (estACommander("travaux", d.travaux)) lignes.push({ cle: "travaux", texte: (d.travaux || "").trim() });
       return;
     }
     sec.items.forEach((_, i) => {
       const e = d.items[si + ":" + i] || {};
-      if (estACommander(e.note)) lignes.push({ cle: si + ":" + i, texte: (e.note || "").trim() });
+      if (estACommander(si + ":" + i, e.note)) lignes.push({ cle: si + ":" + i, texte: (e.note || "").trim() });
     });
   });
   if (!lignes.length) return null;
