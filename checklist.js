@@ -124,9 +124,21 @@ function itemHTML(f, si, i) {
       <button type="button" data-fin="${key}" data-f="nok" class="${e.fin === "nok" ? "sel" : ""}">Pas OK</button></div>`;
   }
   const ko = e.v === "ko";
-  const noteVisible = travaux || e.note || e.open || ko;
+  const noteVisible = travaux || e.note || e.commentaire || e.open || ko;
   extra += noteVisible
-    ? `<div class="note-wrap"><div class="note-hl" aria-hidden="true">${noteHL(key, e.note)}</div><textarea data-note="${key}" class="${ko ? "ko-note" : ""}" placeholder="${ko ? "Commentaire sur le défaut (KO)…" : "Commentaires…"}">${esc(e.note)}</textarea></div><div class="sugg"></div>${commandeHTML(key, e.note)}`
+    ? `<div class="note-split">
+        <div class="note-col">
+          <div class="col-label">Pièce à débiter / à commander</div>
+          <div class="note-wrap"><div class="note-hl" aria-hidden="true">${noteHL(key, e.note)}</div>
+            <textarea data-note="${key}" placeholder="Nom de la pièce…">${esc(e.note)}</textarea></div>
+          <div class="sugg"></div>
+          ${commandeHTML(key, e.note)}
+        </div>
+        <div class="commentaire-col">
+          <div class="col-label">Commentaire</div>
+          <textarea data-commentaire="${key}" class="${ko ? "ko-note" : ""}" placeholder="${ko ? "Commentaire sur le défaut (KO)…" : "Ex. Réglage des phares…"}">${esc(e.commentaire)}</textarea>
+        </div>
+      </div>`
     : `<button type="button" class="link" data-addnote="${key}">+ Commentaire</button>`;
 
   return `<div class="item" id="it-${si}-${i}"><div class="name">${esc(sec.items[i])}</div>
@@ -148,7 +160,19 @@ function renderChecklist() {
   const secs = f.sections.map((sec, si) => {
     let corps;
     if (sec.type === "travaux") {
-      corps = `<div class="item"><div class="note-wrap"><div class="note-hl" aria-hidden="true">${noteHL("travaux", d.travaux)}</div><textarea data-travaux placeholder="Décrire les travaux supplémentaires…">${esc(d.travaux)}</textarea></div><div class="sugg"></div>${commandeHTML("travaux", d.travaux)}</div>`;
+      corps = `<div class="item"><div class="note-split">
+        <div class="note-col">
+          <div class="col-label">Pièce à débiter / à commander</div>
+          <div class="note-wrap"><div class="note-hl" aria-hidden="true">${noteHL("travaux", d.travaux)}</div>
+            <textarea data-travaux placeholder="Nom de la pièce…">${esc(d.travaux)}</textarea></div>
+          <div class="sugg"></div>
+          ${commandeHTML("travaux", d.travaux)}
+        </div>
+        <div class="commentaire-col">
+          <div class="col-label">Commentaire</div>
+          <textarea data-travaux-commentaire placeholder="Décrire les travaux supplémentaires…">${esc(d.travauxCommentaire)}</textarea>
+        </div>
+      </div></div>`;
     } else {
       corps = sec.items.map((_, i) => itemHTML(f, si, i)).join("");
     }
@@ -186,7 +210,7 @@ function stats() {
       if (e.v) {
         if (e.v === "ok") s.ok++;
         else if (e.v === "chef") s.chef++;
-        else if (e.v === "ko") { s.ko++; if (!(e.note || "").trim()) s.koSans++; }
+        else if (e.v === "ko") { s.ko++; if (!(e.commentaire || "").trim()) s.koSans++; }
         else if (e.v === "afaire") s.afaire++;
         else if (e.v === "fait") s.fait++;
         if (besoinTravaux(sec.type, e.v)) { s.aTraiter++; if (e.fin === "ok") s.fin++; }
@@ -282,7 +306,7 @@ function initChecklist() {
         if (!e.v) e.fin = undefined;
       }
       refreshItem(si, i);
-      if (e.v === "ko") document.querySelector(`[data-note="${t.dataset.key}"]`)?.focus();  // saisie directe du commentaire
+      if (e.v === "ko") document.querySelector(`[data-commentaire="${t.dataset.key}"]`)?.focus();  // saisie directe du commentaire
     } else if (t.dataset.fin) {               // fin de travaux
       const [si, i] = t.dataset.fin.split(":").map(Number);
       const e = d.items[t.dataset.fin];
@@ -292,7 +316,7 @@ function initChecklist() {
       const [si, i] = t.dataset.addnote.split(":").map(Number);
       (d.items[t.dataset.addnote] ||= {}).open = true;
       refreshItem(si, i);
-      document.querySelector(`[data-note="${t.dataset.addnote}"]`)?.focus();
+      document.querySelector(`[data-commentaire="${t.dataset.addnote}"]`)?.focus();
     } else if (t.id === "all-ok") {
       f.sections.forEach((sec, si) => {
         if (sec.type !== "std" && sec.type !== "diag") return;
@@ -309,9 +333,11 @@ function initChecklist() {
 
   root.addEventListener("input", ev => {
     const el = ev.target, d = fdata();
-    if (el.dataset.note) { (d.items[el.dataset.note] ||= {}).note = el.value; updateAll(); rafraichirCommande(el.dataset.note, el.value); }
+    if (el.dataset.note) { (d.items[el.dataset.note] ||= {}).note = el.value; rafraichirCommande(el.dataset.note, el.value); }
+    else if (el.dataset.commentaire) { (d.items[el.dataset.commentaire] ||= {}).commentaire = el.value; updateAll(); }
     else if (el.dataset.qty) (d.items[el.dataset.qty] ||= {}).qty = el.value;
     else if ("travaux" in el.dataset) { d.travaux = el.value; rafraichirCommande("travaux", el.value); }
+    else if ("travauxCommentaire" in el.dataset) { d.travauxCommentaire = el.value; }
     else if (el.dataset.qteCommande) {
       const v = el.value.trim();
       if (v) state.qteCommande[el.dataset.qteCommande] = v; else delete state.qteCommande[el.dataset.qteCommande];

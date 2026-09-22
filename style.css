@@ -133,8 +133,11 @@ details.cat .count { font-size: 12px; color: var(--muted); font-weight: 400; }
 .item textarea { margin-top: 8px; min-height: 54px; font-size: 14px; }
 .item .qty { margin-top: 8px; font-size: 14px; }
 textarea.ko-note:placeholder-shown { border-color: var(--ko); }
-.item .note-wrap { position: relative; margin-top: 8px; }
-.item .note-wrap textarea { margin-top: 0; position: relative; z-index: 1; background: transparent; color: transparent; caret-color: var(--text); }
+.item .note-split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; align-items: start; }
+.item .note-split textarea { margin-top: 0; }
+.col-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px; }
+.item .note-wrap { position: relative; }
+.item .note-wrap textarea { position: relative; z-index: 1; background: transparent; color: transparent; caret-color: var(--text); }
 .item .note-wrap textarea::placeholder { color: var(--muted); }
 .note-hl {
   position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
@@ -213,6 +216,7 @@ button.link { background: none; border: 0; color: var(--primary); font-size: 13p
 .rapport-row.courant .rapport-titre { color: var(--primary); }
 .rapport-row .del.arme { background: var(--ko); color: #fff; border-color: var(--ko); }
 @media (max-width: 420px) { .mt { margin-top: 14px; }
+.item .note-split { grid-template-columns: 1fr; }
 /* Écran d'ouverture : logo sur fond blanc */
 .splash { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; background: #fdfdfe; transition: opacity .4s ease; cursor: pointer; }
 .splash img { width: min(72vw, 360px); height: auto; }

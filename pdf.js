@@ -206,12 +206,13 @@ function construireChecklistPdf() {
   f.sections.forEach((sec, si) => {
     lignes.push({ section: sec.titre });
     if (sec.type === "travaux") {
-      lignes.push({ cells: [{ t: (d.travaux || "").trim() || " \n \n " }], full: true });
+      const texte = [(d.travaux || "").trim(), (d.travauxCommentaire || "").trim()].filter(Boolean).join(" — ");
+      lignes.push({ cells: [{ t: texte || " \n \n " }], full: true });
       return;
     }
     sec.items.forEach((nom, i) => {
       const e = d.items[si + ":" + i] || {};
-      const com = [sec.type === "pms" && e.qty ? "Qté / viscosité : " + e.qty : "", (e.note || "").trim()].filter(Boolean).join(" — ");
+      const com = [sec.type === "pms" && e.qty ? "Qté / viscosité : " + e.qty : "", (e.note || "").trim(), (e.commentaire || "").trim()].filter(Boolean).join(" — ");
       let etat = "", couleurEtat;
       if (sec.type === "pms") {                 // « À faire » et « OK » peuvent être cochés en même temps
         etat = [e.afaire && LIBELLE.afaire, e.ok && LIBELLE.ok].filter(Boolean).join(" + ");
