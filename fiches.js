@@ -211,7 +211,8 @@ const FICHES = [
      "SLIDE BAR",
      "CLIM DE NUIT",
      "TROMPE DE TOIT",
-     "RESERVOIR SUPPLEMENTAIRE"
+     "RESERVOIR SUPPLEMENTAIRE",
+     "PRISE HAYON"
     ]
    },
    {
