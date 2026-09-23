@@ -290,6 +290,11 @@ const FICHES = [
      "CONTRÔLE SI DEFAUTS ACTIFS",
      "MISE A JOUR DU FAP SI ECHANGE"
     ]
+   },
+   {
+    "titre": "TRAVAUX SUPPLEMENTAIRES",
+    "type": "travaux",
+    "items": []
    }
   ],
   "notes": [
@@ -497,6 +502,11 @@ const FICHES = [
      "ASSISE DE SIEGE PAS ABIME",
      "FRIGO OBLIGATOIRE"
     ]
+   },
+   {
+    "titre": "TRAVAUX SUPPLEMENTAIRES",
+    "type": "travaux",
+    "items": []
    }
   ],
   "notes": [
@@ -567,6 +577,11 @@ const FICHES = [
      "CONTRÔLE TEST SCR",
      "CONTRÔLE SI DEFAUTS ACTIFS"
     ]
+   },
+   {
+    "titre": "TRAVAUX SUPPLEMENTAIRES",
+    "type": "travaux",
+    "items": []
    }
   ],
   "notes": [

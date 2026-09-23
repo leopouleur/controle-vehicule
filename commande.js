@@ -11,10 +11,6 @@ function commandeDetectee() {
   const d = fdata();
   const res = [];
   f.sections.forEach((sec, si) => {
-    if (sec.type === "travaux") {
-      if (estACommander("travaux", d.travaux)) res.push({ cle: "travaux", texte: (d.travaux || "").trim() });
-      return;
-    }
     sec.items.forEach((_, i) => {
       const e = d.items[si + ":" + i] || {};
       if (estACommander(si + ":" + i, e.note)) res.push({ cle: si + ":" + i, texte: (e.note || "").trim() });

@@ -4,7 +4,7 @@ const state = {
   vehicule: {},
   selection: {},   // pièces du catalogue cochées : { id: true }
   qtePieces: {},   // quantité saisie pour une pièce à débiter : { id: "2" }
-  qteCommande: {}, // quantité saisie pour un commentaire « à commander » : { "si:i" ou "travaux": "2" }
+  qteCommande: {}, // quantité saisie pour un commentaire « à commander » : { "si:i": "2" }
   commandeManuelle: [], // pièces à commander ajoutées à la main : [{ id, texte, qte }]
   testBatterie: {},     // bloc « TEST BATTERIE » de la feuille de pièces : { changee: true, ok: true }
   admin: false,    // mode modification du catalogue (déverrouillé par mot de passe)    // infos du véhicule (partagées entre fiches)

@@ -206,8 +206,7 @@ function construireChecklistPdf() {
   f.sections.forEach((sec, si) => {
     lignes.push({ section: sec.titre });
     if (sec.type === "travaux") {
-      const texte = [(d.travaux || "").trim(), (d.travauxCommentaire || "").trim()].filter(Boolean).join(" — ");
-      lignes.push({ cells: [{ t: texte || " \n \n " }], full: true });
+      lignes.push({ cells: [{ t: (d.travaux || "").trim() || " \n \n " }], full: true });
       return;
     }
     sec.items.forEach((nom, i) => {
@@ -360,10 +359,6 @@ function construireCommandePdf() {
   const f = curFiche(), d = fdata(), v = state.vehicule;
   const lignes = [];
   f.sections.forEach((sec, si) => {
-    if (sec.type === "travaux") {
-      if (estACommander("travaux", d.travaux)) lignes.push({ qte: state.qteCommande.travaux || "1", texte: (d.travaux || "").trim() });
-      return;
-    }
     sec.items.forEach((_, i) => {
       const e = d.items[si + ":" + i] || {};
       if (estACommander(si + ":" + i, e.note)) lignes.push({ qte: state.qteCommande[si + ":" + i] || "1", texte: (e.note || "").trim() });

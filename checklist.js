@@ -111,7 +111,7 @@ function surlignerPieces(texte) {
 }
 // --- Points « Contrôle niveau » et « Entretien selon PMS » : commentaire toujours en vert, jamais une pièce à commander ---
 function estInfoVerte(cle) {
-  if (!cle || cle === "travaux") return false;
+  if (!cle) return false;
   const f = curFiche();
   const [si, i] = cle.split(":").map(Number);
   const sec = f && f.sections[si];
@@ -128,8 +128,7 @@ function noteHL(cle, texte) {
 function rafraichirSurlignage(ta) {
   const hl = ta.closest(".note-wrap")?.querySelector(".note-hl");
   if (!hl) return;
-  const cle = ta.dataset.note || ("travaux" in ta.dataset ? "travaux" : null);
-  hl.innerHTML = noteHL(cle, ta.value);
+  hl.innerHTML = noteHL(ta.dataset.note, ta.value);
 }
 
 // --- Pièces à commander : tout commentaire non vide qui ne cite aucune pièce déjà « à débiter »
@@ -208,19 +207,12 @@ function renderChecklist() {
   const secs = f.sections.map((sec, si) => {
     let corps;
     if (sec.type === "travaux") {
-      corps = `<div class="item"><div class="note-split">
-        <div class="note-col">
-          <div class="col-label">Pièce à débiter / à commander</div>
-          <div class="note-wrap"><div class="note-hl" aria-hidden="true">${noteHL("travaux", d.travaux)}</div>
-            <textarea data-travaux placeholder="Nom de la pièce…">${esc(d.travaux)}</textarea></div>
-          <div class="sugg"></div>
-          ${commandeHTML("travaux", d.travaux)}
-        </div>
-        <div class="commentaire-col">
-          <div class="col-label">Commentaire</div>
-          <textarea data-travaux-commentaire placeholder="Décrire les travaux supplémentaires…">${esc(d.travauxCommentaire)}</textarea>
-        </div>
-      </div></div>`;
+      // Texte libre : jamais analysé, ne définit ni pièce à débiter ni pièce à commander.
+      if (d.travauxCommentaire) {   // anciens rapports : les deux champs sont réunis en un seul
+        d.travaux = [d.travaux, d.travauxCommentaire].filter(Boolean).join("\n");
+        delete d.travauxCommentaire;
+      }
+      corps = `<div class="item"><textarea data-travaux placeholder="Décrire les travaux supplémentaires…">${esc(d.travaux)}</textarea></div>`;
     } else {
       corps = sec.items.map((_, i) => itemHTML(f, si, i)).join("");
     }
@@ -381,13 +373,11 @@ function initChecklist() {
 
   root.addEventListener("input", ev => {
     const el = ev.target, d = fdata();
-    const cleNote = el.dataset.note || ("travaux" in el.dataset ? "travaux" : null);
-    if (cleNote && !estInfoVerte(cleNote) && reconnaitrePieces(el.value)) updatePiecesBadge();   // pièce citée en toutes lettres : quantité 1
+    if (el.dataset.note && !estInfoVerte(el.dataset.note) && reconnaitrePieces(el.value)) updatePiecesBadge();   // pièce citée en toutes lettres : quantité 1
     if (el.dataset.note) { (d.items[el.dataset.note] ||= {}).note = el.value; rafraichirCommande(el.dataset.note, el.value); }
     else if (el.dataset.commentaire) { (d.items[el.dataset.commentaire] ||= {}).commentaire = el.value; updateAll(); }
     else if (el.dataset.qty) (d.items[el.dataset.qty] ||= {}).qty = el.value;
-    else if ("travaux" in el.dataset) { d.travaux = el.value; rafraichirCommande("travaux", el.value); }
-    else if ("travauxCommentaire" in el.dataset) { d.travauxCommentaire = el.value; }
+    else if ("travaux" in el.dataset) d.travaux = el.value;
     else if (el.dataset.qteCommande) {
       const v = el.value.trim();
       if (v) state.qteCommande[el.dataset.qteCommande] = v; else delete state.qteCommande[el.dataset.qteCommande];
