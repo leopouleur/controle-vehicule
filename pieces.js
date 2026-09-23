@@ -1,6 +1,7 @@
-// Onglet 4 : « Pièces à débiter »
-//  - tout le monde : cocher les pièces du catalogue
-//  - ajout / modification / suppression de pièces et références : protégés par mot de passe
+// Onglet 4 : « Pièces à débiter » = la feuille papier « PIECES » (recto + verso), case par case.
+//  - 1re petite colonne : toujours vide (case à cocher de la feuille papier)
+//  - 2e petite colonne : quantité, à saisir ; une pièce écrite dans un commentaire de la checklist s'y met seule en quantité 1
+//  - modification des noms / références : protégée par mot de passe
 function updatePiecesBadge() {
   const b = document.getElementById("badge-pieces");
   const n = piecesADebiter().length;
@@ -8,52 +9,66 @@ function updatePiecesBadge() {
   b.textContent = n;
 }
 
-function refHTML(ref) { return ref ? `<b class="cr">${esc(ref)}</b>` : `<span class="cr vide">réf. à saisir</span>`; }
+const ECHELLE_LIGNE = 0.7;   // pixels d'écran par pixel du scan d'origine (hauteur mini d'une ligne)
 
-// Carte « À débiter » (lecture seule + retrait)
-function aDebiterHTML() {
-  const cochees = piecesADebiter();
-  if (!cochees.length)
-    return `<p class="hint empty-list">Aucune pièce pour le moment. Cochez des pièces dans le catalogue ci-dessous.</p>`;
-  return cochees.map(p => `
-    <div class="sel-row">
-      <span class="cn">${esc(p.nom)}</span>${refHTML(p.ref)}
-      <input type="number" class="qte" data-qte="${p.id}" min="1" inputmode="numeric" placeholder="Qté"
-        value="${esc(state.qtePieces[p.id] || "")}" aria-label="Quantité pour ${esc(p.nom)}">
-      <button type="button" class="del" data-unsel="${p.id}" aria-label="Retirer ${esc(p.nom)}">✕</button>
-    </div>`).join("");
-}
-function refreshADebiter() {
-  document.getElementById("a-debiter").innerHTML = aDebiterHTML();
-  const n = piecesADebiter().length;
-  document.getElementById("pieces-count").textContent = n ? `${n} pièce${n > 1 ? "s" : ""}` : "";
-  updatePiecesBadge();
+function texteCelluleHTML(c) {
+  const segs = segmentsCellule(c).map(s => {
+    const cls = [s.gras ? "b" : "", s.rouge ? "r" : ""].filter(Boolean).join(" ");
+    return cls ? `<span class="${cls}">${esc(s.t)}</span>` : esc(s.t);
+  }).join("");
+  return segs + (c.trait ? `<span class="fe-trait" style="width:${(c.trait / 4).toFixed(1)}em"></span>` : "");
 }
 
-const chercheur = p => norm(p.nom + " " + p.ref + " " + p.ref.replace(/\s/g, ""));
-
-function catalogueHTML() {
-  return GROUPES.map(g => {
-    const items = CATALOGUE.filter(p => p.groupe === g);
-    if (!items.length && !state.admin) return "";
-    const rows = items.map(p => state.admin
-      ? `<div class="edit-row" data-id="${p.id}">
-           <input data-champ="nom" value="${esc(p.nom)}" aria-label="Nom de la pièce">
-           <input data-champ="ref" value="${esc(p.ref)}" aria-label="Référence" placeholder="Référence">
-           <button type="button" class="del" data-suppr="${p.id}" aria-label="Supprimer ${esc(p.nom)}">✕</button>
-         </div>`
-      : `<label class="cat-row" data-s="${esc(chercheur(p))}">
-           <input type="checkbox" id="c-${p.id}" data-id="${p.id}" ${state.selection[p.id] ? "checked" : ""}>
-           <span class="cn">${esc(p.nom)}</span>${refHTML(p.ref)}
-         </label>`).join("");
-    return `<section class="grp"><h3>${esc(g)}</h3>${rows}</section>`;
-  }).join("") + `<p class="hint no-result" hidden>Aucune pièce ne correspond.</p>`;
+// Les deux petites cases (coche + quantité) d'un côté de la feuille
+function petitesCasesHTML(c) {
+  const piece = !c.etiquette && !c.speciale && c.nom.trim();
+  const choisie = !!(piece && state.selection[c.id]);
+  const qte = piece && !state.admin
+    ? `<input type="number" data-qte="${c.id}" min="1" inputmode="numeric" value="${choisie ? esc(state.qtePieces[c.id] || "1") : ""}" aria-label="Quantité : ${esc(c.nom)}">`
+    : "";
+  return `<div class="fe-c fe-case"></div><div class="fe-c fe-qte">${qte}</div>`;
 }
 
-// Bandeau du haut du catalogue : verrou / déverrouillage / formulaire d'ajout
+// La grande case (référence + dénomination)
+function grandeCaseHTML(c) {
+  if (c.absorbee) return "";
+  const cls = ["fe-c", "fe-nom", c.taille ? "fe-grand" : "", ...(c.gras || "").split("").map(x => "g-" + x)].filter(Boolean).join(" ");
+  if (c.speciale === "batterie") {
+    const t = state.testBatterie;
+    return `<div class="${cls} fe-batterie" style="grid-row: span 2">
+      <div><b>TEST BATTERIE</b> (cocher choix) :</div>
+      <div class="fe-bat-choix">
+        <span class="fe-bat"><input type="checkbox" id="bat-changee" data-bat="changee" ${t.changee ? "checked" : ""}><label for="bat-changee">Changée</label></span>
+        <span class="fe-bat"><input type="checkbox" id="bat-ok" data-bat="ok" ${t.ok ? "checked" : ""}><label for="bat-ok">Test OK</label></span>
+      </div></div>`;
+  }
+  if (state.admin && !c.etiquette)
+    return `<div class="${cls}"><input data-edit="${c.id}" data-champ="nom" value="${esc(c.nom)}" placeholder="Nom" aria-label="Nom de la pièce">
+      <input data-edit="${c.id}" data-champ="ref" value="${esc(c.ref)}" placeholder="Référence" aria-label="Référence"></div>`;
+  return `<div class="${cls}"><span class="fe-txt">${texteCelluleHTML(c)}</span></div>`;
+}
+
+function grilleHTML(page) {
+  const lignes = page.map(l => `minmax(${Math.round(l.h * ECHELLE_LIGNE)}px, auto)`).join(" ");
+  const cases = page.map(l => petitesCasesHTML(l.g) + grandeCaseHTML(l.g) + petitesCasesHTML(l.d) + grandeCaseHTML(l.d)).join("");
+  return `<div class="fe-grille" style="grid-template-rows: ${lignes}">${cases}</div>`;
+}
+
+// En-tête de la feuille : NOM (contrôleur) et N° OR (OR magasin) viennent de l'onglet « Véhicule »
+function enteteHTML() {
+  const v = state.vehicule;
+  const sous = [v.immat, v.date && dateFR(v.date)].filter(Boolean).join(" · ");
+  return `<div class="fe-entete">
+    <div class="fe-boite fe-boite-nom"><b>NOM :</b> ${esc(v.controleur || "")}${sous ? `<div class="fe-sous">${esc(sous)}</div>` : ""}</div>
+    <div class="fe-boite fe-boite-or"><b>N° OR :</b> ${esc(v.orMagasin || "")}</div>
+    <div class="fe-boite fe-titre">PIECES</div>
+  </div>`;
+}
+
+// Bandeau du bas : verrou / déverrouillage / rétablissement de la feuille d'origine
 function gestionHTML() {
   if (!state.admin) {
-    return `<button type="button" class="lock-btn" id="btn-unlock">🔒 Ajouter ou modifier des pièces</button>
+    return `<button type="button" class="lock-btn" id="btn-unlock">🔒 Modifier les noms et références de la feuille</button>
       <form id="unlock-form" class="unlock" autocomplete="off" hidden>
         <label for="mdp">Mot de passe</label>
         <div class="unlock-line">
@@ -65,64 +80,54 @@ function gestionHTML() {
   }
   return `<div class="admin-bar"><span>🔓 Mode modification</span>
       <button type="button" class="lock-btn" id="btn-lock">Verrouiller</button></div>
-    <form id="piece-form" class="piece-add" autocomplete="off">
-      <div><label for="new-nom">Nom de la pièce</label><input id="new-nom" required></div>
-      <div><label for="new-ref">Référence</label><input id="new-ref"></div>
-      <div class="full"><label for="new-groupe">Rubrique</label>
-        <select id="new-groupe">${GROUPES.map(g => `<option>${esc(g)}</option>`).join("")}</select></div>
-      <button class="primary-btn" type="submit">Ajouter au catalogue</button>
-    </form>
-    <p class="hint">Les noms et références se modifient directement dans la liste ci-dessous ; les changements sont enregistrés sur cet appareil.</p>
-    <button type="button" class="link" id="btn-origine">Rétablir le catalogue d'origine</button>`;
+    <p class="hint">Modifiez directement le nom et la référence dans les cases de la feuille (une case vide se remplit pour ajouter une pièce, une case vidée
+      retire la pièce). Les changements sont enregistrés sur cet appareil.</p>
+    <button type="button" class="link" id="btn-origine">Rétablir la feuille d'origine</button>`;
 }
 
 function renderPieces() {
   const root = document.getElementById("tab-pieces");
   root.innerHTML = `
-    <div class="card">
-      <h2>Pièces à débiter <span id="pieces-count" class="count"></span></h2>
-      <div id="a-debiter"></div>
+    <p class="hint fe-aide">Saisissez la quantité dans la 2<sup>e</sup> petite colonne : elle est imprimée sur la feuille. Une pièce écrite
+      dans un commentaire de la checklist s'y place seule en quantité 1, modifiable ici.</p>
+    <div class="card" id="gestion">${gestionHTML()}</div>
+    <button class="primary-btn btn-export" type="button">Exporter le contrôle en PDF</button>
+    <div id="feuille-zone">
+      <div class="feuille">${enteteHTML()}${grilleHTML(FEUILLE[0])}</div>
+      <div class="fe-verso">Verso de la feuille</div>
+      <div class="feuille">${grilleHTML(FEUILLE[1])}</div>
     </div>
-    <button class="primary-btn" id="pdf-pieces" type="button">Exporter le contrôle en PDF</button>
+    <button class="primary-btn btn-export mt" type="button">Exporter le contrôle en PDF</button>`;
+  updatePiecesBadge();
+  root.querySelectorAll(".btn-export").forEach(b => b.addEventListener("click", exportPdf));
 
-    <div class="card mt">
-      <h2>Catalogue des pièces</h2>
-      <div id="gestion">${gestionHTML()}</div>
-      ${state.admin ? "" : `<label for="cat-search">Rechercher un nom ou une référence</label>
-        <input id="cat-search" type="search" placeholder="ex. filtre, capot, 74 24…" autocomplete="off">`}
-      <div id="catalogue">${catalogueHTML()}</div>
-    </div>`;
-  refreshADebiter();
-  document.getElementById("pdf-pieces").addEventListener("click", exportPdf);
-  document.getElementById("a-debiter").addEventListener("click", ev => {
-    const b = ev.target.closest("[data-unsel]"); if (!b) return;
-    delete state.selection[b.dataset.unsel];
-    delete state.qtePieces[b.dataset.unsel];
-    const cb = document.getElementById("c-" + b.dataset.unsel); if (cb) cb.checked = false;
-    refreshADebiter();
+  const zone = document.getElementById("feuille-zone");
+  let sauveT = null;
+  zone.addEventListener("input", ev => {
+    const el = ev.target;
+    if (el.dataset.qte) {                                   // quantité : vide (ou 0) = pas de pièce
+      const id = el.dataset.qte, v = el.value.trim();
+      if (v && Number(v) > 0) { state.selection[id] = true; state.qtePieces[id] = v; }
+      else { delete state.selection[id]; delete state.qtePieces[id]; }
+      updatePiecesBadge();
+    } else if (el.dataset.edit) {                           // mode modification : nom / référence d'une case
+      const c = cellulesEditables().find(x => x.id === el.dataset.edit); if (!c) return;
+      c[el.dataset.champ] = el.value; c.modifie = true;
+      if (el.dataset.champ === "nom") { delete c.aff; delete c.alias; }   // le nouveau nom remplace mise en forme et alias d'origine
+      reconstruireCatalogue();                                             // les suggestions et la reconnaissance suivent tout de suite
+      clearTimeout(sauveT);
+      sauveT = setTimeout(() => {
+        if (!sauverFeuille()) toast("Enregistrement impossible sur cet appareil : les changements seront perdus à la fermeture.");
+        updatePiecesBadge();
+      }, 300);
+    }
   });
-  document.getElementById("a-debiter").addEventListener("input", ev => {
-    const id = ev.target.dataset.qte; if (!id) return;
-    const v = ev.target.value.trim();
-    if (v) state.qtePieces[id] = v; else delete state.qtePieces[id];
+  zone.addEventListener("change", ev => {
+    const k = ev.target.dataset.bat; if (!k) return;
+    if (ev.target.checked) state.testBatterie[k] = true; else delete state.testBatterie[k];
   });
-  const cat = document.getElementById("catalogue");
 
   if (!state.admin) {
-    // --- Utilisation normale : cocher, chercher, déverrouiller
-    cat.addEventListener("change", ev => {
-      const id = ev.target.dataset.id; if (!id) return;
-      if (ev.target.checked) state.selection[id] = true;
-      else { delete state.selection[id]; delete state.qtePieces[id]; }
-      refreshADebiter();
-    });
-    document.getElementById("cat-search").addEventListener("input", ev => {
-      const mots = norm(ev.target.value).split(/\s+/).filter(Boolean);
-      let vus = 0;
-      cat.querySelectorAll(".cat-row").forEach(r => { const ok = mots.every(m => r.dataset.s.includes(m)); r.hidden = !ok; if (ok) vus++; });
-      cat.querySelectorAll(".grp").forEach(g => { g.hidden = !g.querySelector(".cat-row:not([hidden])"); });
-      cat.querySelector(".no-result").hidden = vus > 0;
-    });
     const form = document.getElementById("unlock-form");
     document.getElementById("btn-unlock").addEventListener("click", () => {
       form.hidden = !form.hidden;
@@ -136,48 +141,15 @@ function renderPieces() {
     });
     return;
   }
-
-  // --- Mode modification (déverrouillé)
-  const avertir = ok => { if (!ok) toast("Enregistrement impossible sur cet appareil : les changements seront perdus à la fermeture."); };
   document.getElementById("btn-lock").addEventListener("click", () => { state.admin = false; renderPieces(); });
-  document.getElementById("piece-form").addEventListener("submit", ev => {
-    ev.preventDefault();
-    const nom = document.getElementById("new-nom"), ref = document.getElementById("new-ref");
-    if (!nom.value.trim()) { nom.focus(); return; }
-    CATALOGUE.push({ id: nouvelIdPiece(), nom: nom.value.trim(), ref: ref.value.trim(), groupe: document.getElementById("new-groupe").value });
-    avertir(sauverCatalogue());
-    const g = document.getElementById("new-groupe").value;
-    renderPieces();
-    document.getElementById("new-groupe").value = g;
-    document.getElementById("new-nom").focus();
-    toast("Pièce ajoutée au catalogue.");
-  });
-  cat.addEventListener("input", ev => {
-    const row = ev.target.closest(".edit-row"); if (!row || !ev.target.dataset.champ) return;
-    const p = CATALOGUE.find(x => x.id === row.dataset.id); if (!p) return;
-    p[ev.target.dataset.champ] = ev.target.value;
-    clearTimeout(cat.t); cat.t = setTimeout(() => { avertir(sauverCatalogue()); refreshADebiter(); }, 300);
-  });
-  cat.addEventListener("click", ev => {
-    const b = ev.target.closest("[data-suppr]"); if (!b) return;
-    const p = CATALOGUE.find(x => x.id === b.dataset.suppr);
-    if (!b.dataset.arme) {  // premier clic : demande de confirmation
-      b.dataset.arme = "1"; b.textContent = "Supprimer ?"; b.classList.add("arme");
-      setTimeout(() => { if (b.isConnected) { delete b.dataset.arme; b.textContent = "✕"; b.classList.remove("arme"); } }, 3000);
-      return;
-    }
-    CATALOGUE = CATALOGUE.filter(x => x.id !== p.id); delete state.selection[p.id]; delete state.qtePieces[p.id];
-    avertir(sauverCatalogue()); renderPieces();
-  });
   const origine = document.getElementById("btn-origine");
   origine.addEventListener("click", () => {
     if (!origine.dataset.arme) {
       origine.dataset.arme = "1"; origine.textContent = "Confirmer : effacer mes modifications ?";
-      setTimeout(() => { if (origine.isConnected) { delete origine.dataset.arme; origine.textContent = "Rétablir le catalogue d'origine"; } }, 4000);
+      setTimeout(() => { if (origine.isConnected) { delete origine.dataset.arme; origine.textContent = "Rétablir la feuille d'origine"; } }, 4000);
       return;
     }
-    CATALOGUE = CATALOGUE_ORIGINE.map(p => ({ ...p }));
-    Object.keys(state.selection).forEach(id => { if (!CATALOGUE.some(p => p.id === id)) { delete state.selection[id]; delete state.qtePieces[id]; } });
-    avertir(sauverCatalogue()); renderPieces(); toast("Catalogue d'origine rétabli.");
+    retablirFeuille();
+    renderPieces(); toast("Feuille d'origine rétablie.");
   });
 }

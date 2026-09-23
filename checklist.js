@@ -16,7 +16,7 @@ const compte = s => s.type === "std" || s.type === "diag" || s.type === "pms";
 const openCats = new Set();
 
 // --- Suggestions de pièces (depuis l'onglet « Pièces à débiter ») ---
-const norm = t => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+const norm = t => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[’‘]/g, "'").toLowerCase();
 
 // Cherche les pièces dont le nom commence à correspondre à la fin du texte tapé.
 function suggestions(text) {
@@ -26,11 +26,12 @@ function suggestions(text) {
   const mots = base.split(/\s+/);
   const res = [];
   pieces.forEach((p, i) => {
-    if (!p.nom.trim()) return;
-    const nom = norm(p.nom);
+    const noms = nomsPiece(p).map(norm).filter(n => n.trim());
     for (let k = 0; k < mots.length; k++) {        // plus longue fin de phrase qui colle
-      const fin = mots.slice(k).join(" ");
-      if (fin.length >= 2 && nom.includes(norm(fin))) { res.push({ i, cut: fin.length, pref: nom.startsWith(norm(fin)) ? 0 : 1 }); break; }
+      const brut = mots.slice(k).join(" "), fin = norm(brut);
+      if (fin.length < 2) continue;
+      const nom = noms.find(n => n.includes(fin));
+      if (nom) { res.push({ i, cut: brut.length, pref: nom.startsWith(fin) ? 0 : 1 }); break; }
     }
   });
   return res.sort((a, b) => a.pref - b.pref).slice(0, 6);
@@ -42,23 +43,70 @@ function showSugg(ta) {
   if (!box || !box.classList.contains("sugg")) return;
   box.innerHTML = suggestions(ta.value).map(m => {
     const p = piecesConnues()[m.i];
-    return `<button type="button" data-pick="${m.i}" data-cut="${m.cut}">🔧 ${esc(p.nom)}${p.ref ? ` <small>· ${esc(p.ref)}</small>` : ""}</button>`;
+    const detail = [p.groupe, p.ref].filter(Boolean).join(" · ");
+    return `<button type="button" data-pick="${m.i}" data-cut="${m.cut}">🔧 ${esc(p.nom)}${detail ? ` <small>· ${esc(detail)}</small>` : ""}</button>`;
   }).join("");
 }
 
-// --- Surlignage des pièces déjà « à débiter » dans le texte d'un commentaire ---
+// --- Reconnaissance des pièces de la feuille « Pièces à débiter » dans le texte d'un commentaire ---
+// Insensible aux accents et à la casse ; un nom ne compte que s'il est isolé (pas au milieu d'un autre mot).
+const estMot = ch => !!ch && /[\p{L}\p{N}]/u.test(ch);
+function normAvecCarte(t) {
+  let n = "";
+  const carte = [];   // carte[k] = position, dans le texte d'origine, du k-ème caractère normalisé
+  for (let i = 0; i < t.length; i++) {
+    const c = norm(t[i]);
+    for (let k = 0; k < c.length; k++) { n += c[k]; carte.push(i); }
+  }
+  return { n, carte };
+}
+function occurrences(n, nom) {
+  const res = [];
+  for (let i = n.indexOf(nom); i !== -1; i = n.indexOf(nom, i + 1))
+    if (!estMot(n[i - 1]) && !estMot(n[i + nom.length])) res.push(i);
+  return res;
+}
+// Plages [début, fin[ du texte d'origine où apparaît le nom d'une des pièces données
+function plagesPieces(t, pieces) {
+  const { n, carte } = normAvecCarte(t);
+  const noms = [...new Set(pieces.flatMap(nomsPiece).map(x => norm(x).trim()).filter(Boolean))]
+    .sort((a, b) => b.length - a.length);   // les noms les plus longs d'abord (évite qu'un nom court en coupe un plus long)
+  const res = [];
+  noms.forEach(nom => occurrences(n, nom).forEach(s => {
+    const a = carte[s], b = carte[s + nom.length - 1] + 1;
+    if (!res.some(([x, y]) => a < y && b > x)) res.push([a, b]);
+  }));
+  return res.sort((p, q) => p[0] - q[0]);
+}
+// Sélectionne (quantité 1) toute pièce citée en toutes lettres dans le texte. Un nom porté par plusieurs pièces
+// (ex. « Collier », « coin G ») reste ambigu : on choisit alors la bonne dans les suggestions.
+function reconnaitrePieces(texte) {
+  const t = String(texte ?? "");
+  if (!t.trim()) return false;
+  const { n } = normAvecCarte(t);
+  const parNom = new Map();
+  piecesConnues().forEach(p => nomsPiece(p).forEach(x => {
+    const k = norm(x).trim();
+    if (k) parNom.set(k, (parNom.get(k) || new Set()).add(p));
+  }));
+  let change = false;
+  parNom.forEach((ps, nom) => {
+    if (ps.size !== 1) return;
+    const p = [...ps][0];
+    if (!state.selection[p.id] && occurrences(n, nom).length && selectionnerPiece(p.id)) change = true;
+  });
+  return change;
+}
+
+// --- Surlignage des pièces « à débiter » dans le texte d'un commentaire ---
 function surlignerPieces(texte) {
   const t = String(texte ?? "");
   if (!t) return "";
-  const noms = [...new Set(piecesADebiter().map(p => p.nom.trim()).filter(Boolean))]
-    .sort((a, b) => b.length - a.length);   // les noms les plus longs d'abord (évite qu'un nom court en coupe un plus long)
-  if (!noms.length) return esc(t);
-  const motif = new RegExp("(" + noms.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")", "gi");
-  let out = "", pos = 0, m;
-  while ((m = motif.exec(t))) {
-    out += esc(t.slice(pos, m.index)) + `<span class="piece-trouvee">${esc(m[0])}</span>`;
-    pos = motif.lastIndex;
-  }
+  let out = "", pos = 0;
+  plagesPieces(t, piecesADebiter()).forEach(([a, b]) => {
+    out += esc(t.slice(pos, a)) + `<span class="piece-trouvee">${esc(t.slice(a, b))}</span>`;
+    pos = b;
+  });
   return out + esc(t.slice(pos));
 }
 // --- Points « Contrôle niveau » et « Entretien selon PMS » : commentaire toujours en vert, jamais une pièce à commander ---
@@ -87,7 +135,7 @@ function rafraichirSurlignage(ta) {
 // --- Pièces à commander : tout commentaire non vide qui ne cite aucune pièce déjà « à débiter »
 // (et qui n'est pas un point « Contrôle niveau », toujours exclu de cette liste) ---
 function aPieceReconnue(texte) {
-  return surlignerPieces(texte).includes('class="piece-trouvee"');
+  return plagesPieces(String(texte ?? ""), piecesADebiter()).length > 0;
 }
 function estACommander(cle, texte) {
   const t = String(texte ?? "").trim();
@@ -287,7 +335,7 @@ function initChecklist() {
       const base = ta.value.trimEnd();
       const piece = piecesConnues()[Number(t.dataset.pick)];
       ta.value = base.slice(0, base.length - Number(t.dataset.cut)) + texteInsere(piece);
-      state.selection[piece.id] = true;        // coche aussi la pièce dans « Pièces à débiter » (avant le surlignage)
+      selectionnerPiece(piece.id);             // la pièce passe sur la feuille « Pièces à débiter » en quantité 1 (avant le surlignage)
       ta.dispatchEvent(new Event("input", { bubbles: true }));   // enregistre dans l'état + surligne
       updatePiecesBadge();
       box.innerHTML = "";
@@ -333,6 +381,8 @@ function initChecklist() {
 
   root.addEventListener("input", ev => {
     const el = ev.target, d = fdata();
+    const cleNote = el.dataset.note || ("travaux" in el.dataset ? "travaux" : null);
+    if (cleNote && !estInfoVerte(cleNote) && reconnaitrePieces(el.value)) updatePiecesBadge();   // pièce citée en toutes lettres : quantité 1
     if (el.dataset.note) { (d.items[el.dataset.note] ||= {}).note = el.value; rafraichirCommande(el.dataset.note, el.value); }
     else if (el.dataset.commentaire) { (d.items[el.dataset.commentaire] ||= {}).commentaire = el.value; updateAll(); }
     else if (el.dataset.qty) (d.items[el.dataset.qty] ||= {}).qty = el.value;

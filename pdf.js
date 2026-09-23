@@ -252,75 +252,104 @@ function construireChecklistPdf() {
   return doc.build();
 }
 
-// --- PDF « Pièces à débiter » : document séparé, uniquement s'il y a des pièces cochées ---
+// --- PDF « Pièces à débiter » : la feuille papier « PIECES » en entier (recto + verso), quantités remplies ---
+// Uniquement s'il y a au moins une pièce à débiter (ou un test batterie coché).
 function construirePiecesPdf() {
-  const f = curFiche(), v = state.vehicule;
-  const aDebiter = piecesADebiter();
-  if (!aDebiter.length) return null;
+  const f = curFiche(), v = state.vehicule, tb = state.testBatterie;
+  if (!piecesADebiter().length && !tb.changee && !tb.ok) return null;
 
+  // Géométrie relevée sur la feuille scannée : 1 px du scan = PX mm ; colonnes = 2 petites cases, grande case, 2 petites cases, grande case
+  const PX = 0.1306, X0 = 11.05, NOIR = [40, 52, 66], TEINTE = [238, 243, 248], ROUGE = [179, 50, 58], FIN = 0.2, EPAIS = 0.6;
+  const XS = [X0];
+  [70, 75.5, 513, 71, 80, 629.5].forEach(w => XS.push(XS[XS.length - 1] + w * PX));
   const doc = new PdfDoc();
-  doc.addPage();
-  let py = 12;
-  doc.text(MARGE, py + 5, winansi("PIÈCES À DÉBITER"), 16, true, COUL.accent);
-  doc.text(PAGE_W - MARGE, py + 5, winansi(f.nom), 9, true, COUL.gris, true);
-  py += 9;
-  doc.rect(MARGE, py, PAGE_W - 2 * MARGE, 0.5, COUL.accent);
-  py += 5;
-  const resume = [v.immat && "Véhicule : " + v.immat, v.date && "Date : " + dateFR(v.date),
-    v.controleur && "Contrôleur : " + v.controleur, v.orMagasin && "N° OR : " + v.orMagasin]
-    .filter(Boolean).join("     ");
-  if (resume) { doc.text(MARGE, py + 2, winansi(resume), 9, false, COUL.texte); py += 8; }
+  const hLigne = (x1, x2, y, ep, rgb) => doc.rect(x1, y - ep / 2, x2 - x1, ep, rgb || NOIR);
+  const vLigne = (x, y1, y2, ep, rgb) => doc.rect(x - ep / 2, y1, ep, y2 - y1, rgb || NOIR);
+  const bandeau = y => doc.rect(XS[0], y, XS[6] - XS[0], 0.9, COUL.accent);   // liseré rouge en haut de chaque page
+  const base = (haut, h, taille) => haut + h / 2 + taille * 0.127;   // ligne de base d'un texte centré verticalement
 
-  // Présentation façon feuille papier « PIECES », en grille façon tableur : case à cocher, quantité demandée,
-  // puis une grande colonne référence + dénomination de la pièce — sur deux colonnes de page.
-  const GOUTTIERE = 8, CASE_W = 8, TAILLE_L = 9, INTERLIGNE_L = 4, PAD_L = 1.8;
-  const colW = (PAGE_W - 2 * MARGE - GOUTTIERE) / 2;
-  const grandeColW = colW - 2 * CASE_W;
-
-  const mesures = aDebiter.map(p => {
-    const nom = winansi(p.nom), ref = winansi(p.ref || "");
-    const wNom = largeur(nom, TAILLE_L, false);
-    const wRef = ref ? largeur(ref, TAILLE_L, true) : 0;
-    const dispo = grandeColW - 3;
-    const uneLigne = !ref || wNom + 2 + wRef <= dispo;
-    const lignes = uneLigne ? [{ nom, ref }] : [{ nom, ref: "" }, { nom: "", ref }];
-    return { p, demande: state.qtePieces[p.id] || "1", lignes, h: Math.max(7, lignes.length * INTERLIGNE_L + 2 * PAD_L) };
-  });
-
-  // Répartit les pièces entre les deux colonnes à hauteur égale (comme la feuille papier).
-  const totalH = mesures.reduce((s, m) => s + m.h, 0);
-  let hGauche = 0, coupure = mesures.length;
-  for (let i = 0; i < mesures.length; i++) {
-    if (i > 0 && hGauche + mesures[i].h > totalH / 2) { coupure = i; break; }
-    hGauche += mesures[i].h;
-  }
-  const colonnes = [mesures.slice(0, coupure), mesures.slice(coupure)];
-
-  colonnes.forEach((liste, ci) => {
-    const x = MARGE + ci * (colW + GOUTTIERE);
-    let y = py;
-    liste.forEach(m => {
-      doc.rect(x, y, CASE_W, m.h, null, COUL.trait);                       // case à cocher (vide)
-      doc.rect(x + CASE_W, y, CASE_W, m.h, null, COUL.trait);              // quantité demandée
-      doc.rect(x + 2 * CASE_W, y, grandeColW, m.h, null, COUL.trait);      // référence + dénomination
-      doc.text(x + 2 * CASE_W - 1.5, y + (m.h + TAILLE_L * 0.35) / 2, winansi(m.demande), TAILLE_L, true, COUL.accent, true);
-      m.lignes.forEach((l, k) => {
-        const yTxt = y + PAD_L + k * INTERLIGNE_L + 2.6;
-        let xx = x + 2 * CASE_W + 1.5;
-        if (l.nom) { doc.text(xx, yTxt, l.nom, TAILLE_L, false, COUL.texte); xx += largeur(l.nom, TAILLE_L, false) + 2; }
-        if (l.ref) doc.text(xx, yTxt, l.ref, TAILLE_L, true, COUL.texte);
-      });
-      y += m.h;
+  // Écrit des segments { t, gras, rouge, couleur } centrés dans [xa, xb] (taille réduite si ça dépasse) ; `apres` = blanc laissé après le texte
+  const ecrireCentre = (segs, xa, xb, yb, taille, apres = 0) => {
+    const mesure = s => segs.reduce((w, sg) => w + largeur(winansi(sg.t), s, sg.gras), 0) + apres;
+    const dispo = xb - xa - 2.5;
+    const s = mesure(taille) > dispo ? taille * dispo / mesure(taille) : taille;
+    let x = (xa + xb) / 2 - mesure(s) / 2;
+    segs.forEach(sg => {
+      doc.text(x, yb, winansi(sg.t), s, sg.gras, sg.couleur || (sg.rouge ? ROUGE : COUL.texte));
+      x += largeur(winansi(sg.t), s, sg.gras);
     });
-  });
-  py += Math.max(...colonnes.map(l => l.reduce((s, m) => s + m.h, 0)));
+    return x;
+  };
+
+  const dessinerGrille = (page, y0) => {
+    const tops = [y0];
+    page.forEach(l => tops.push(tops[tops.length - 1] + l.h * PX));
+    const n = page.length, bas = tops[n];
+    page.forEach((l, i) => [1, 4].forEach(k => doc.rect(XS[k], tops[i], XS[k + 1] - XS[k], tops[i + 1] - tops[i], TEINTE)));   // colonnes quantité teintées
+    for (let i = 0; i <= n; i++) {                       // traits fins (la grande case fusionnée du test batterie n'est pas coupée)
+      hLigne(XS[0], XS[5], tops[i], FIN);
+      if (i === 0 || i === n || !page[i].d.absorbee) hLigne(XS[5], XS[6], tops[i], FIN);
+    }
+    XS.forEach(x => vLigne(x, y0, bas, FIN));
+    page.forEach((l, i) => [[l.g, 2], [l.d, 5]].forEach(([c, k]) => {   // contours en gras
+      const g = c.gras || "";
+      if (g.includes("h")) hLigne(XS[k], XS[k + 1], tops[i], EPAIS, COUL.accent);
+      if (g.includes("b")) hLigne(XS[k], XS[k + 1], tops[i + 1], EPAIS, COUL.accent);
+      if (g.includes("g")) vLigne(XS[k], tops[i], tops[i + 1], EPAIS, COUL.accent);
+      if (g.includes("d")) vLigne(XS[k + 1], tops[i], tops[i + 1], EPAIS, COUL.accent);
+    }));
+    page.forEach((l, i) => {
+      const h = tops[i + 1] - tops[i];
+      [[l.g, 0], [l.d, 3]].forEach(([c, k]) => {         // k = 1re petite case du côté ; la grande case est k + 2
+        if (c.absorbee) return;
+        const xa = XS[k + 2], xb = XS[k + 3];
+        if (c.speciale === "batterie") {
+          const hh = tops[i + 2] - tops[i];
+          ecrireCentre([{ t: "TEST BATTERIE", gras: true }, { t: " (cocher choix) :", gras: false }], xa, xb, tops[i] + hh * 0.36, 10);
+          const w = xb - xa;
+          doc.text(xa + w * 0.17, tops[i] + hh * 0.74, winansi(`[${tb.changee ? "X" : " "}] Changée`), 10, false, COUL.texte);
+          doc.text(xa + w * 0.58, tops[i] + hh * 0.74, winansi(`[${tb.ok ? "X" : " "}] Test OK`), 10, false, COUL.texte);
+          return;
+        }
+        if (!c.nom.trim()) return;
+        if (c.etiquette) { ecrireCentre([{ t: c.nom, gras: false }], xa, xb, base(tops[i], h, 11), 11); return; }
+        const taille = c.taille || 11, yb = base(tops[i], h, taille);
+        const fin = ecrireCentre(segmentsCellule(c), xa, xb, yb, taille, c.trait ? c.trait * 0.995 : 0);
+        if (c.trait) hLigne(fin + 1, fin + c.trait * 0.995, yb + 0.6, FIN);   // blanc à remplir à la main
+        if (state.selection[c.id])                                              // pièce à débiter : quantité (la 1re case reste vide)
+          ecrireCentre([{ t: state.qtePieces[c.id] || "1", gras: true, couleur: COUL.accent }], XS[k + 1], XS[k + 2], base(tops[i], h, 12), 12);
+      });
+    });
+    return bas;
+  };
+
+  // Recto : en-tête (NOM = contrôleur, N° OR = OR magasin) puis la grille
+  doc.addPage();
+  const hy = 8.5, hNom = 160 * PX, hTitre = 85 * PX;
+  hLigne(XS[0], XS[6], hy, FIN);
+  hLigne(XS[0], XS[5], hy + hNom, FIN);
+  [XS[0], XS[5], XS[6]].forEach(x => vLigne(x, hy, hy + hNom + hTitre, FIN));
+  bandeau(hy - 2.4);
+  doc.text(XS[0] + 2.5, hy + 4.6, winansi("N O M"), 7.5, true, COUL.accent);
+  doc.text(XS[0] + 2.5, hy + 11.5, winansi(v.controleur || ""), 15, true, COUL.texte);
+  const sous = [v.immat && "Véhicule : " + v.immat, v.date && "Date : " + dateFR(v.date)].filter(Boolean).join("     ");
+  if (sous) doc.text(XS[0] + 2.5, hy + 17.2, winansi(sous), 8.5, false, COUL.gris);
+  doc.text(XS[5] + 2.5, hy + 4.6, winansi("N °   O R"), 7.5, true, COUL.accent);
+  doc.text(XS[5] + 2.5, hy + 15, winansi(v.orMagasin || ""), 24, true, COUL.texte);
+  ecrireCentre([{ t: "P I E C E S", gras: true, couleur: COUL.accent }], XS[0], XS[5], base(hy + hNom, hTitre, 22), 22);
+  dessinerGrille(FEUILLE[0], hy + hNom + hTitre);
+
+  // Verso : la suite de la feuille
+  doc.addPage();
+  bandeau(10 - 2.4);
+  dessinerGrille(FEUILLE[1], 10);
 
   const n = doc.pages.length;
   const pied = ["Pièces à débiter", f.nom, v.immat].filter(Boolean).join(" · ");
   for (let i = 0; i < n; i++) {
     doc.cur = doc.pages[i];
-    doc.text(MARGE, 291, winansi(pied), 7, false, COUL.gris);
-    doc.text(PAGE_W - MARGE, 291, winansi(`Page ${i + 1}/${n}`), 7, false, COUL.gris, true);
+    doc.text(MARGE, 293.5, winansi(pied), 7, false, COUL.gris);
+    doc.text(PAGE_W - MARGE, 293.5, winansi(`Page ${i + 1}/${n}`), 7, false, COUL.gris, true);
   }
   return doc.build();
 }

@@ -19,7 +19,7 @@ function sauverRapportCourant() {
   tous[state.rapportId] = {
     id: state.rapportId, fiche: state.fiche,
     vehicule: state.vehicule, selection: state.selection, qtePieces: state.qtePieces,
-    qteCommande: state.qteCommande, commandeManuelle: state.commandeManuelle, data: state.data,
+    qteCommande: state.qteCommande, commandeManuelle: state.commandeManuelle, testBatterie: state.testBatterie, data: state.data,
     majLe: Date.now(),
     exporteLe: tous[state.rapportId]?.exporteLe || null
   };
@@ -56,6 +56,7 @@ function nouveauRapport() {
   state.qtePieces = {};
   state.qteCommande = {};
   state.commandeManuelle = [];
+  state.testBatterie = {};
   state.admin = false;
   state.rapportId = null;
   openCats.clear();
@@ -71,6 +72,7 @@ function reprendreRapport(id) {
   state.qtePieces = r.qtePieces || {};
   state.qteCommande = r.qteCommande || {};
   state.commandeManuelle = r.commandeManuelle || [];
+  state.testBatterie = r.testBatterie || {};
   state.data = r.data || {};
   state.admin = false;
   openCats.clear();
