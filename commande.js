@@ -5,7 +5,7 @@ function nouvelIdCommande() { return "m" + Date.now().toString(36) + Math.random
 
 // Mêmes règles que le PDF (construireCommandePdf, pdf.js) : tout ce qui, dans le champ « Pièce à débiter / à commander »,
 // ne cite aucune pièce déjà « à débiter » — même mêlé à une pièce reconnue dans le même champ — et qui n'est pas un point
-// « info » (Contrôle niveau / Entretien selon PMS).
+// « info » (Contrôle niveau / Entretien selon PMS). Un retour à la ligne ou un « / » sépare plusieurs pièces dans le même champ.
 function commandeDetectee() {
   const f = curFiche();
   if (!f) return [];
@@ -14,8 +14,8 @@ function commandeDetectee() {
   f.sections.forEach((sec, si) => {
     sec.items.forEach((_, i) => {
       const e = d.items[si + ":" + i] || {};
-      const texte = texteACommander(si + ":" + i, e.note);
-      if (texte) res.push({ cle: si + ":" + i, texte });
+      const cle = si + ":" + i;
+      segmentsACommander(cle, e.note).forEach((texte, k) => res.push({ cle: cle + ":" + k, texte }));
     });
   });
   return res;

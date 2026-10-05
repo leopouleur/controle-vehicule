@@ -147,6 +147,10 @@ textarea.ko-note:placeholder-shown { border-color: var(--ko); }
 .piece-trouvee { color: var(--lien); font-weight: 600; }
 .piece-a-commander { color: var(--ko); font-weight: 600; }
 .note-verte { color: var(--ok); font-weight: 600; }
+.commande-qte { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+.commande-ligne { display: flex; align-items: center; gap: 8px; }
+.commande-ligne .commande-nom { flex: 1; font-size: 13px; color: var(--ko); font-weight: 600; min-width: 0; overflow-wrap: break-word; }
+.commande-ligne .qty { width: 72px; flex: 0 0 auto; margin-top: 0; text-align: center; }
 .warn-line { margin-top: 8px; font-size: 13px; font-weight: 600; color: var(--ko); }
 .sugg { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .sugg:empty { display: none; }

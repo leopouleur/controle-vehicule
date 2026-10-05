@@ -134,26 +134,35 @@ function rafraichirSurlignage(ta) {
 
 // --- Pièces à commander : tout mot, phrase ou lettre d'un commentaire qui ne cite aucune pièce déjà « à débiter »,
 // même mêlé dans le même champ à une pièce reconnue (et sauf sur un point « Contrôle niveau » / « Entretien selon PMS »,
-// toujours exclu de cette liste) ---
-function texteACommander(cle, texte) {
-  if (estInfoVerte(cle)) return "";
+// toujours exclu de cette liste). Un retour à la ligne ou un « / » sépare plusieurs pièces à commander dans le même champ
+// (ex. « Calandre / Vis de calandre » = 2 pièces, chacune avec sa propre quantité). ---
+function segmentsACommander(cle, texte) {
+  if (estInfoVerte(cle)) return [];
   const t = String(texte ?? "");
-  if (!t.trim()) return "";
+  if (!t.trim()) return [];
   let reste = "", pos = 0;
   plagesPieces(t, piecesADebiter()).forEach(([a, b]) => { reste += t.slice(pos, a); pos = b; });
   reste += t.slice(pos);
-  return reste.replace(/[ \t]+/g, " ").replace(/^[\s,;.\-–—]+|[\s,;.\-–—]+$/g, "").trim();
+  return reste.split(/\r?\n|\//).map(s => s.replace(/[ \t]+/g, " ").replace(/^[\s,;.\-–—]+|[\s,;.\-–—]+$/g, "").trim()).filter(Boolean);
 }
-function estACommander(cle, texte) { return !!texteACommander(cle, texte); }
+function estACommander(cle, texte) { return segmentsACommander(cle, texte).length > 0; }
 function commandeHTML(cle, texte) {
-  return `<div class="commande-qte" data-commande="${cle}" ${estACommander(cle, texte) ? "" : "hidden"}>
-    <input type="number" class="qty" data-qte-commande="${cle}" min="1" inputmode="numeric"
-      placeholder="Quantité à commander" value="${esc(state.qteCommande[cle] || "")}">
-  </div>`;
+  const segs = segmentsACommander(cle, texte);
+  const lignes = segs.map((s, k) => `
+    <div class="commande-ligne"><span class="commande-nom">${esc(s)}</span>
+      <input type="number" class="qty" data-qte-commande="${cle}:${k}" min="1" inputmode="numeric"
+        placeholder="Qté" value="${esc(state.qteCommande[cle + ":" + k] || "")}"></div>`).join("");
+  return `<div class="commande-qte" data-commande="${cle}" ${segs.length ? "" : "hidden"}>${lignes}</div>`;
 }
 function rafraichirCommande(cle, texte) {
   const div = document.querySelector(`[data-commande="${cle}"]`);
-  if (div) div.hidden = !estACommander(cle, texte);
+  if (!div) return;
+  const segs = segmentsACommander(cle, texte);
+  div.hidden = !segs.length;
+  div.innerHTML = segs.map((s, k) => `
+    <div class="commande-ligne"><span class="commande-nom">${esc(s)}</span>
+      <input type="number" class="qty" data-qte-commande="${cle}:${k}" min="1" inputmode="numeric"
+        placeholder="Qté" value="${esc(state.qteCommande[cle + ":" + k] || "")}"></div>`).join("");
 }
 
 function itemHTML(f, si, i) {

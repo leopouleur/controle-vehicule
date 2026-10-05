@@ -361,8 +361,8 @@ function construireCommandePdf() {
   f.sections.forEach((sec, si) => {
     sec.items.forEach((_, i) => {
       const e = d.items[si + ":" + i] || {};
-      const texte = texteACommander(si + ":" + i, e.note);
-      if (texte) lignes.push({ qte: state.qteCommande[si + ":" + i] || "1", texte });
+      const cle = si + ":" + i;
+      segmentsACommander(cle, e.note).forEach((texte, k) => lignes.push({ qte: state.qteCommande[cle + ":" + k] || "1", texte }));
     });
   });
   state.commandeManuelle.forEach(m => {
