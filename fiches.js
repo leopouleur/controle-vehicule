@@ -17,7 +17,7 @@ const FICHES = [
      "COUSSINS SUSPENSION AVANT",
      "SOCLE BOUTEILLE DESHY",
      "MOUSTACHE",
-     "MARCHE PIEDS",
+     "MARCHE PIEDS AVANT",
      "I / L / COIN PC / SUPPORT PLAQUE",
      "OPTIQUES ET CONTOUR DE PHARES"
     ]
@@ -47,8 +47,7 @@ const FICHES = [
      "POTENCE + VALVE REMORQUE",
      "CHEMINEE + SUPPORT",
      "COUSSIN DE SUSPENSION",
-     "VALVE DE NIVELLEMENT",
-     "DEFLECTEURS"
+     "VALVE DE NIVELLEMENT"
     ]
    },
    {
@@ -66,10 +65,9 @@ const FICHES = [
     "titre": "ARRIERE CHASSIS",
     "type": "std",
     "items": [
-     "DEMI AILE",
+     "DEMI AILE + PARE BOUES",
      "FEUX",
      "PLAQUE IMMATRICULATION",
-     "PARE BOUES",
      "SELLETTE + BOULONS",
      "TRAVERSE ARRIERE"
     ]
@@ -78,11 +76,11 @@ const FICHES = [
     "titre": "COTE DROIT CHASSIS",
     "type": "std",
     "items": [
-     "PLAQUE CATA LATERALE ET SUPERIEURE",
-     "RESERVOIR ADBLUE + PLAQUE SUPERIEUR",
-     "JUPE LATERALE",
+     "PARE BOUE + CALOTTE",
      "RESERVOIRS GO + SANGLE",
-     "PARE BOUE + CALOTTE"
+     "JUPE LATERALE",
+     "RESERVOIR ADBLUE + PLAQUE SUPERIEUR",
+     "PLAQUE CATA LATERALE ET SUPERIEURE"
     ]
    },
    {
