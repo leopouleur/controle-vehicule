@@ -23,23 +23,23 @@ function commandeDetectee() {
 
 function detecteeHTML() {
   const liste = commandeDetectee();
-  if (!liste.length) return `<p class="hint empty-list">Aucun commentaire ne signale de pièce à commander pour le moment.</p>`;
+  if (!liste.length) return `<p class="hint empty-list">${t("commande.videDetectee")}</p>`;
   return liste.map(l => `
     <div class="sel-row">
       <span class="cn">${esc(l.texte)}</span>
-      <input type="number" class="qte" data-qte-auto="${l.cle}" min="1" inputmode="numeric" placeholder="Qté"
-        value="${esc(state.qteCommande[l.cle] || "")}" aria-label="Quantité">
+      <input type="number" class="qte" data-qte-auto="${l.cle}" min="1" inputmode="numeric" placeholder="${t("checklist.qte")}"
+        value="${esc(state.qteCommande[l.cle] || "")}" aria-label="${t("checklist.qte")}">
     </div>`).join("");
 }
 
 function manuelleHTML() {
-  if (!state.commandeManuelle.length) return `<p class="hint empty-list">Aucune pièce ajoutée manuellement pour le moment.</p>`;
+  if (!state.commandeManuelle.length) return `<p class="hint empty-list">${t("commande.videManuelle")}</p>`;
   return state.commandeManuelle.map(m => `
     <div class="sel-row manuelle">
-      <input type="text" data-manuelle-texte="${m.id}" value="${esc(m.texte)}" placeholder="Dénomination de la pièce" aria-label="Dénomination">
-      <input type="number" class="qte" data-manuelle-qte="${m.id}" min="1" inputmode="numeric" placeholder="Qté"
-        value="${esc(m.qte || "")}" aria-label="Quantité">
-      <button type="button" class="del" data-manuelle-suppr="${m.id}" aria-label="Retirer cette pièce">✕</button>
+      <input type="text" data-manuelle-texte="${m.id}" value="${esc(m.texte)}" placeholder="${t("commande.denomination")}" aria-label="${t("commande.denomination")}">
+      <input type="number" class="qte" data-manuelle-qte="${m.id}" min="1" inputmode="numeric" placeholder="${t("checklist.qte")}"
+        value="${esc(m.qte || "")}" aria-label="${t("checklist.qte")}">
+      <button type="button" class="del" data-manuelle-suppr="${m.id}" aria-label="${t("commande.retirer")}">✕</button>
     </div>`).join("");
 }
 
@@ -54,24 +54,23 @@ function renderCommande() {
   const f = curFiche();
   if (!f) {
     root.innerHTML = `<div class="card empty">
-      <p>Choisissez d'abord un type de contrôle.</p>
-      <button class="primary-btn" type="button" id="back-choix3">Choisir un contrôle</button></div>`;
+      <p>${t("commun.choisirDabord")}</p>
+      <button class="primary-btn" type="button" id="back-choix3">${t("commun.choisirControle")}</button></div>`;
     document.getElementById("back-choix3").addEventListener("click", () => showTab("choix"));
     return;
   }
   root.innerHTML = `
     <div class="card">
-      <h2>Repérées dans les commentaires</h2>
-      <p class="hint">Pièces citées dans un commentaire de la checklist qui ne correspondent à aucune pièce du catalogue
-        « à débiter ». Pour les corriger, modifiez le commentaire dans l'onglet Checklist.</p>
+      <h2>${t("commande.reperees")}</h2>
+      <p class="hint">${t("commande.hint")}</p>
       <div id="commande-detectee"></div>
     </div>
     <div class="card">
-      <h2>Ajoutées manuellement</h2>
+      <h2>${t("commande.ajoutees")}</h2>
       <div id="commande-manuelle"></div>
-      <button type="button" class="link" id="btn-ajout-commande">+ Ajouter une pièce</button>
+      <button type="button" class="link" id="btn-ajout-commande">${t("commande.ajouterPiece")}</button>
     </div>
-    <button class="primary-btn" id="pdf-commande" type="button">Exporter le contrôle en PDF</button>`;
+    <button class="primary-btn" id="pdf-commande" type="button">${t("commande.exporter")}</button>`;
   refreshCommande();
 
   document.getElementById("pdf-commande").addEventListener("click", exportPdf);

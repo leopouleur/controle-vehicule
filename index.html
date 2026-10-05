@@ -16,18 +16,21 @@
   <div id="splash" class="splash" role="presentation"><img src="logo.png" alt="Trucks UTC"></div>
 
   <header class="topbar">
-    <div>
-      <h1>Contrôle véhicule</h1>
-      <div id="fiche-name" class="sub" hidden></div>
+    <div class="topbar-left">
+      <button id="btn-langue" class="lang-btn" type="button" aria-label="Changer la langue">🇫🇷</button>
+      <div>
+        <h1 data-i18n="app.titre">Contrôle véhicule</h1>
+        <div id="fiche-name" class="sub" hidden></div>
+      </div>
     </div>
-    <button id="btn-reset" class="ghost" type="button">Nouveau</button>
+    <button id="btn-reset" class="ghost" type="button" data-i18n="app.nouveau">Nouveau</button>
   </header>
 
   <div id="install-banner" class="install-banner" hidden>
-    <span>Installer l'application sur cette tablette pour l'utiliser comme une appli, même sans connexion.</span>
+    <span data-i18n="install.texte">Installer l'application sur cette tablette pour l'utiliser comme une appli, même sans connexion.</span>
     <div class="install-banner-btns">
-      <button id="btn-install" type="button" class="accent">Installer</button>
-      <button id="btn-install-dismiss" type="button" class="ghost-dark" aria-label="Fermer">✕</button>
+      <button id="btn-install" type="button" class="accent" data-i18n="install.installer">Installer</button>
+      <button id="btn-install-dismiss" type="button" class="ghost-dark" data-i18n-aria="install.fermer" aria-label="Fermer">✕</button>
     </div>
   </div>
 
@@ -44,27 +47,28 @@
 
   <nav class="tabbar" role="tablist">
     <button class="tab active" role="tab" data-tab="choix" type="button">
-      <span class="ico">📋</span><span>Type de contrôle</span>
+      <span class="ico">📋</span><span data-i18n="tabs.choix">Type de contrôle</span>
     </button>
     <button class="tab" role="tab" data-tab="vehicule" type="button">
-      <span class="ico">🚛</span><span>Véhicule</span>
+      <span class="ico">🚛</span><span data-i18n="tabs.vehicule">Véhicule</span>
     </button>
     <button class="tab" role="tab" data-tab="checklist" type="button">
-      <span class="ico">✅</span><span>Checklist</span>
+      <span class="ico">✅</span><span data-i18n="tabs.checklist">Checklist</span>
       <span id="badge" class="badge" hidden>0</span>
     </button>
     <button class="tab" role="tab" data-tab="pieces" type="button">
-      <span class="ico">🔧</span><span>Pièces à débiter</span>
+      <span class="ico">🔧</span><span data-i18n="tabs.pieces">Pièces à débiter</span>
       <span id="badge-pieces" class="badge count-badge" hidden>0</span>
     </button>
     <button class="tab" role="tab" data-tab="commande" type="button">
-      <span class="ico">📦</span><span>Pièces à commander</span>
+      <span class="ico">📦</span><span data-i18n="tabs.commande">Pièces à commander</span>
     </button>
     <button class="tab" role="tab" data-tab="historique" type="button">
-      <span class="ico">🕘</span><span>Historique</span>
+      <span class="ico">🕘</span><span data-i18n="tabs.historique">Historique</span>
     </button>
   </nav>
 
+  <script src="i18n.js"></script>
   <script src="fiches.js"></script>
   <script src="state.js"></script>
   <script src="rapports.js"></script>

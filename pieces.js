@@ -24,7 +24,7 @@ function petitesCasesHTML(c) {
   const piece = !c.etiquette && !c.speciale && c.nom.trim();
   const choisie = !!(piece && state.selection[c.id]);
   const qte = piece && !state.admin
-    ? `<input type="number" data-qte="${c.id}" min="1" inputmode="numeric" value="${choisie ? esc(state.qtePieces[c.id] || "1") : ""}" aria-label="Quantité : ${esc(c.nom)}">`
+    ? `<input type="number" data-qte="${c.id}" min="1" inputmode="numeric" value="${choisie ? esc(state.qtePieces[c.id] || "1") : ""}" aria-label="${t("checklist.qte")} : ${esc(c.nom)}">`
     : "";
   return `<div class="fe-c fe-case"></div><div class="fe-c fe-qte">${qte}</div>`;
 }
@@ -34,17 +34,17 @@ function grandeCaseHTML(c) {
   if (c.absorbee) return "";
   const cls = ["fe-c", "fe-nom", c.taille ? "fe-grand" : "", ...(c.gras || "").split("").map(x => "g-" + x)].filter(Boolean).join(" ");
   if (c.speciale === "batterie") {
-    const t = state.testBatterie;
+    const tb = state.testBatterie;
     return `<div class="${cls} fe-batterie" style="grid-row: span 2">
-      <div><b>TEST BATTERIE</b> (cocher choix) :</div>
+      <div><b>${t("pieces.testBatterie")}</b> ${t("pieces.cocherChoix")}</div>
       <div class="fe-bat-choix">
-        <span class="fe-bat"><input type="checkbox" id="bat-changee" data-bat="changee" ${t.changee ? "checked" : ""}><label for="bat-changee">Changée</label></span>
-        <span class="fe-bat"><input type="checkbox" id="bat-ok" data-bat="ok" ${t.ok ? "checked" : ""}><label for="bat-ok">Test OK</label></span>
+        <span class="fe-bat"><input type="checkbox" id="bat-changee" data-bat="changee" ${tb.changee ? "checked" : ""}><label for="bat-changee">${t("pieces.changee")}</label></span>
+        <span class="fe-bat"><input type="checkbox" id="bat-ok" data-bat="ok" ${tb.ok ? "checked" : ""}><label for="bat-ok">${t("pieces.testOk")}</label></span>
       </div></div>`;
   }
   if (state.admin && !c.etiquette)
-    return `<div class="${cls}"><input data-edit="${c.id}" data-champ="nom" value="${esc(c.nom)}" placeholder="Nom" aria-label="Nom de la pièce">
-      <input data-edit="${c.id}" data-champ="ref" value="${esc(c.ref)}" placeholder="Référence" aria-label="Référence"></div>`;
+    return `<div class="${cls}"><input data-edit="${c.id}" data-champ="nom" value="${esc(c.nom)}" placeholder="${t("pieces.nomPlaceholder")}" aria-label="${t("pieces.nomPlaceholder")}">
+      <input data-edit="${c.id}" data-champ="ref" value="${esc(c.ref)}" placeholder="${t("pieces.refPlaceholder")}" aria-label="${t("pieces.refPlaceholder")}"></div>`;
   return `<div class="${cls}"><span class="fe-txt">${texteCelluleHTML(c)}</span></div>`;
 }
 
@@ -59,45 +59,43 @@ function enteteHTML() {
   const v = state.vehicule;
   const sous = [v.immat, v.date && dateFR(v.date)].filter(Boolean).join(" · ");
   return `<div class="fe-entete">
-    <div class="fe-boite fe-boite-nom"><b>NOM :</b> ${esc(v.controleur || "")}${sous ? `<div class="fe-sous">${esc(sous)}</div>` : ""}</div>
-    <div class="fe-boite fe-boite-or"><b>N° OR :</b> ${esc(v.orMagasin || "")}</div>
-    <div class="fe-boite fe-titre">PIECES</div>
+    <div class="fe-boite fe-boite-nom"><b>${t("pieces.nom")}</b> ${esc(v.controleur || "")}${sous ? `<div class="fe-sous">${esc(sous)}</div>` : ""}</div>
+    <div class="fe-boite fe-boite-or"><b>${t("pieces.nOr")}</b> ${esc(v.orMagasin || "")}</div>
+    <div class="fe-boite fe-titre">${t("pieces.titreFeuille")}</div>
   </div>`;
 }
 
 // Bandeau du bas : verrou / déverrouillage / rétablissement de la feuille d'origine
 function gestionHTML() {
   if (!state.admin) {
-    return `<button type="button" class="lock-btn" id="btn-unlock">🔒 Modifier les noms et références de la feuille</button>
+    return `<button type="button" class="lock-btn" id="btn-unlock">${t("pieces.verrouBtn")}</button>
       <form id="unlock-form" class="unlock" autocomplete="off" hidden>
-        <label for="mdp">Mot de passe</label>
+        <label for="mdp">${t("pieces.motDePasse")}</label>
         <div class="unlock-line">
           <input id="mdp" type="password" inputmode="numeric" autocomplete="off">
-          <button class="primary-btn" type="submit">Débloquer</button>
+          <button class="primary-btn" type="submit">${t("pieces.debloquer")}</button>
         </div>
-        <p id="mdp-err" class="err" hidden>Mot de passe incorrect.</p>
+        <p id="mdp-err" class="err" hidden>${t("pieces.motDePasseErreur")}</p>
       </form>`;
   }
-  return `<div class="admin-bar"><span>🔓 Mode modification</span>
-      <button type="button" class="lock-btn" id="btn-lock">Verrouiller</button></div>
-    <p class="hint">Modifiez directement le nom et la référence dans les cases de la feuille (une case vide se remplit pour ajouter une pièce, une case vidée
-      retire la pièce). Les changements sont enregistrés sur cet appareil.</p>
-    <button type="button" class="link" id="btn-origine">Rétablir la feuille d'origine</button>`;
+  return `<div class="admin-bar"><span>${t("pieces.modeModif")}</span>
+      <button type="button" class="lock-btn" id="btn-lock">${t("pieces.verrouiller")}</button></div>
+    <p class="hint">${t("pieces.hintModif")}</p>
+    <button type="button" class="link" id="btn-origine">${t("pieces.retablir")}</button>`;
 }
 
 function renderPieces() {
   const root = document.getElementById("tab-pieces");
   root.innerHTML = `
-    <p class="hint fe-aide">Saisissez la quantité dans la 2<sup>e</sup> petite colonne : elle est imprimée sur la feuille. Une pièce écrite
-      dans un commentaire de la checklist s'y place seule en quantité 1, modifiable ici.</p>
+    <p class="hint fe-aide">${t("pieces.aide")}</p>
     <div class="card" id="gestion">${gestionHTML()}</div>
-    <button class="primary-btn btn-export" type="button">Exporter le contrôle en PDF</button>
+    <button class="primary-btn btn-export" type="button">${t("pieces.exporter")}</button>
     <div id="feuille-zone">
       <div class="feuille">${enteteHTML()}${grilleHTML(FEUILLE[0])}</div>
-      <div class="fe-verso">Verso de la feuille</div>
+      <div class="fe-verso">${t("pieces.verso")}</div>
       <div class="feuille">${grilleHTML(FEUILLE[1])}</div>
     </div>
-    <button class="primary-btn btn-export mt" type="button">Exporter le contrôle en PDF</button>`;
+    <button class="primary-btn btn-export mt" type="button">${t("pieces.exporter")}</button>`;
   updatePiecesBadge();
   root.querySelectorAll(".btn-export").forEach(b => b.addEventListener("click", exportPdf));
 
@@ -117,7 +115,7 @@ function renderPieces() {
       reconstruireCatalogue();                                             // les suggestions et la reconnaissance suivent tout de suite
       clearTimeout(sauveT);
       sauveT = setTimeout(() => {
-        if (!sauverFeuille()) toast("Enregistrement impossible sur cet appareil : les changements seront perdus à la fermeture.");
+        if (!sauverFeuille()) toast(t("pieces.enregImpossible"));
         updatePiecesBadge();
       }, 300);
     }
@@ -145,11 +143,11 @@ function renderPieces() {
   const origine = document.getElementById("btn-origine");
   origine.addEventListener("click", () => {
     if (!origine.dataset.arme) {
-      origine.dataset.arme = "1"; origine.textContent = "Confirmer : effacer mes modifications ?";
-      setTimeout(() => { if (origine.isConnected) { delete origine.dataset.arme; origine.textContent = "Rétablir la feuille d'origine"; } }, 4000);
+      origine.dataset.arme = "1"; origine.textContent = t("pieces.retablirConfirm");
+      setTimeout(() => { if (origine.isConnected) { delete origine.dataset.arme; origine.textContent = t("pieces.retablir"); } }, 4000);
       return;
     }
     retablirFeuille();
-    renderPieces(); toast("Feuille d'origine rétablie.");
+    renderPieces(); toast(t("pieces.retabliOk"));
   });
 }

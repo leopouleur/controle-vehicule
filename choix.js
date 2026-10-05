@@ -6,18 +6,18 @@ function renderChoix() {
     const sel = f.id === state.fiche;
     return `<button type="button" class="fiche-card ${sel ? "sel" : ""}" data-fiche="${f.id}">
       <span class="fiche-titre">${esc(f.nom)}</span>
-      <span class="fiche-meta">${countPoints(f)} points · ${nbSec} rubriques</span>
-      ${sel ? '<span class="fiche-check">✓ Sélectionné</span>' : ""}
+      <span class="fiche-meta">${countPoints(f)} ${t("choix.points")} · ${nbSec} ${t("choix.rubriques")}</span>
+      ${sel ? `<span class="fiche-check">${t("choix.selectionne")}</span>` : ""}
     </button>`;
   }).join("");
 
   root.innerHTML = `
     <div class="card">
-      <h2>Choisissez le type de contrôle</h2>
-      <p class="hint">Sélectionnez la fiche à remplir. Vous passerez ensuite aux informations du véhicule puis à la checklist.</p>
+      <h2>${t("choix.titre")}</h2>
+      <p class="hint">${t("choix.hint")}</p>
       <div class="fiche-list">${cartes}</div>
     </div>
-    ${state.fiche ? '<button class="primary-btn" id="go-vehicule" type="button">Continuer → Véhicule</button>' : ""}`;
+    ${state.fiche ? `<button class="primary-btn" id="go-vehicule" type="button">${t("choix.continuer")}</button>` : ""}`;
 
   root.querySelectorAll("[data-fiche]").forEach(b =>
     b.addEventListener("click", () => {

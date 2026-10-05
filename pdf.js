@@ -410,15 +410,15 @@ function toast(msg) {
 
 async function exportPdf() {
   const f = curFiche();
-  if (!f) { toast("Choisissez d'abord un type de contrôle."); return; }
+  if (!f) { toast(t("commun.choisirDabord")); return; }
   let checklistBlob, piecesBlob, commandeBlob;
   try {
     checklistBlob = construireChecklistPdf();
     piecesBlob = construirePiecesPdf();
     commandeBlob = construireCommandePdf();
-  } catch (err) { toast("Impossible de créer le PDF : " + err.message); return; }
+  } catch (err) { toast(t("pdf.toastErreurPdf", { msg: err.message })); return; }
 
-  const slug = t => String(t || "").trim().replace(/[^\w-]+/g, "_").replace(/^_+|_+$/g, "");
+  const slug = s => String(s || "").trim().replace(/[^\w-]+/g, "_").replace(/^_+|_+$/g, "");
   const suffixe = ["_" + slug(f.nom), state.vehicule.immat && "_" + slug(state.vehicule.immat), state.vehicule.date && "_" + state.vehicule.date]
     .filter(Boolean).join("");
   const fichiers = [{ nom: "controle" + suffixe + ".pdf", data: checklistBlob }];
@@ -431,8 +431,8 @@ async function exportPdf() {
     try {
       for (const fi of fichiers) await dl.save({ filename: fi.nom, data: fi.data });
       marquerExporte();
-      toast(fichiers.length > 1 ? "PDF enregistrés : " + fichiers.map(fi => fi.nom).join(", ") : "PDF enregistré : " + fichiers[0].nom);
-    } catch (e) { toast(e && e.code === "declined" ? "Enregistrement annulé." : "Enregistrement impossible (" + ((e && (e.message || e.code)) || "erreur") + ")."); }
+      toast(fichiers.length > 1 ? t("pdf.toastEnregistres", { noms: fichiers.map(fi => fi.nom).join(", ") }) : t("pdf.toastEnregistre", { nom: fichiers[0].nom }));
+    } catch (e) { toast(e && e.code === "declined" ? t("pdf.toastAnnule") : t("pdf.toastEnregImpossible", { detail: (e && (e.message || e.code)) || "erreur" })); }
     return;
   }
   marquerExporte();
@@ -442,5 +442,5 @@ async function exportPdf() {
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
   });
-  toast(fichiers.length > 1 ? "PDF générés : " + fichiers.map(fi => fi.nom).join(", ") : "PDF généré : " + fichiers[0].nom);
+  toast(fichiers.length > 1 ? t("pdf.toastGeneres", { noms: fichiers.map(fi => fi.nom).join(", ") }) : t("pdf.toastGenere", { nom: fichiers[0].nom }));
 }

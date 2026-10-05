@@ -1,9 +1,9 @@
 // Onglet 3 : « Checklist » (générée depuis la fiche choisie)
 const CHOIX = {
-  std:    [{ v: "ok", l: "OK" }, { v: "chef", l: "CHEF" }, { v: "ko", l: "KO" }],
-  diag:   [{ v: "ok", l: "OK" }, { v: "ko", l: "KO" }],
-  pms:    [{ v: "afaire", l: "À faire" }, { v: "ok", l: "OK" }],
-  amelio: [{ v: "afaire", l: "À faire" }, { v: "fait", l: "Fait" }]
+  std:    [{ v: "ok", lKey: "etat.ok" }, { v: "chef", lKey: "etat.chef" }, { v: "ko", lKey: "etat.ko" }],
+  diag:   [{ v: "ok", lKey: "etat.ok" }, { v: "ko", lKey: "etat.ko" }],
+  pms:    [{ v: "afaire", lKey: "etat.afaire" }, { v: "ok", lKey: "etat.ok" }],
+  amelio: [{ v: "afaire", lKey: "etat.afaire" }, { v: "fait", lKey: "etat.fait" }]
 };
 // Une valeur qui demande une intervention -> on propose « Fin travaux »
 function besoinTravaux(type, v) {
@@ -151,7 +151,7 @@ function commandeHTML(cle, texte) {
   const lignes = segs.map((s, k) => `
     <div class="commande-ligne"><span class="commande-nom">${esc(s)}</span>
       <input type="number" class="qty" data-qte-commande="${cle}:${k}" min="1" inputmode="numeric"
-        placeholder="Qté" value="${esc(state.qteCommande[cle + ":" + k] || "")}"></div>`).join("");
+        placeholder="${t("checklist.qte")}" value="${esc(state.qteCommande[cle + ":" + k] || "")}"></div>`).join("");
   return `<div class="commande-qte" data-commande="${cle}" ${segs.length ? "" : "hidden"}>${lignes}</div>`;
 }
 function rafraichirCommande(cle, texte) {
@@ -162,7 +162,7 @@ function rafraichirCommande(cle, texte) {
   div.innerHTML = segs.map((s, k) => `
     <div class="commande-ligne"><span class="commande-nom">${esc(s)}</span>
       <input type="number" class="qty" data-qte-commande="${cle}:${k}" min="1" inputmode="numeric"
-        placeholder="Qté" value="${esc(state.qteCommande[cle + ":" + k] || "")}"></div>`).join("");
+        placeholder="${t("checklist.qte")}" value="${esc(state.qteCommande[cle + ":" + k] || "")}"></div>`).join("");
 }
 
 function itemHTML(f, si, i) {
@@ -172,35 +172,35 @@ function itemHTML(f, si, i) {
   // PMS : « À faire » et « OK » sont deux cases indépendantes (les deux peuvent rester cochées).
   const pms = sec.type === "pms";
   const btns = CHOIX[sec.type].map(c =>
-    `<button type="button" data-key="${key}" data-v="${c.v}" class="${(pms ? e[c.v] : e.v === c.v) ? "sel" : ""}">${c.l}</button>`).join("");
+    `<button type="button" data-key="${key}" data-v="${c.v}" class="${(pms ? e[c.v] : e.v === c.v) ? "sel" : ""}">${t(c.lKey)}</button>`).join("");
   const travaux = pms ? !!e.afaire : (e.v && besoinTravaux(sec.type, e.v));
 
   let extra = "";
   if (sec.type === "pms") {
-    extra += `<input class="qty" data-qty="${key}" value="${esc(e.qty)}" placeholder="Quantité / viscosité">`;
+    extra += `<input class="qty" data-qty="${key}" value="${esc(e.qty)}" placeholder="${t("checklist.qteViscosite")}">`;
   }
   if (f.finTravaux && travaux) {
-    extra += `<div class="fin"><span>Fin travaux :</span>
-      <button type="button" data-fin="${key}" data-f="ok" class="${e.fin === "ok" ? "sel" : ""}">OK</button>
-      <button type="button" data-fin="${key}" data-f="nok" class="${e.fin === "nok" ? "sel" : ""}">Pas OK</button></div>`;
+    extra += `<div class="fin"><span>${t("checklist.finTravaux")}</span>
+      <button type="button" data-fin="${key}" data-f="ok" class="${e.fin === "ok" ? "sel" : ""}">${t("checklist.ok")}</button>
+      <button type="button" data-fin="${key}" data-f="nok" class="${e.fin === "nok" ? "sel" : ""}">${t("checklist.pasOk")}</button></div>`;
   }
   const ko = e.v === "ko";
   const noteVisible = travaux || e.note || e.commentaire || e.open || ko;
   extra += noteVisible
     ? `<div class="note-split">
         <div class="note-col">
-          <div class="col-label">Pièce à débiter / à commander</div>
+          <div class="col-label">${t("checklist.colPiece")}</div>
           <div class="note-wrap"><div class="note-hl" aria-hidden="true">${noteHL(key, e.note)}</div>
-            <textarea data-note="${key}" placeholder="Nom de la pièce…">${esc(e.note)}</textarea></div>
+            <textarea data-note="${key}" placeholder="${t("checklist.nomPiece")}">${esc(e.note)}</textarea></div>
           <div class="sugg"></div>
           ${commandeHTML(key, e.note)}
         </div>
         <div class="commentaire-col">
-          <div class="col-label">Commentaire</div>
-          <textarea data-commentaire="${key}" class="${ko ? "ko-note" : ""}" placeholder="${ko ? "Commentaire sur le défaut (KO)…" : "Ex. Réglage des phares…"}">${esc(e.commentaire)}</textarea>
+          <div class="col-label">${t("checklist.colCommentaire")}</div>
+          <textarea data-commentaire="${key}" class="${ko ? "ko-note" : ""}" placeholder="${ko ? t("checklist.defautKO") : t("checklist.exReglage")}">${esc(e.commentaire)}</textarea>
         </div>
       </div>`
-    : `<button type="button" class="link" data-addnote="${key}">+ Commentaire</button>`;
+    : `<button type="button" class="link" data-addnote="${key}">${t("checklist.ajouterCommentaire")}</button>`;
 
   return `<div class="item" id="it-${si}-${i}"><div class="name">${esc(sec.items[i])}</div>
     <div class="choices">${btns}</div>${extra}</div>`;
@@ -211,8 +211,8 @@ function renderChecklist() {
   const f = curFiche();
   if (!f) {
     root.innerHTML = `<div class="card empty">
-      <p>Choisissez d'abord un type de contrôle.</p>
-      <button class="primary-btn" type="button" id="back-choix2">Choisir un contrôle</button></div>`;
+      <p>${t("commun.choisirDabord")}</p>
+      <button class="primary-btn" type="button" id="back-choix2">${t("commun.choisirControle")}</button></div>`;
     document.getElementById("back-choix2").addEventListener("click", () => showTab("choix"));
     updateBadge();
     return;
@@ -226,7 +226,7 @@ function renderChecklist() {
         d.travaux = [d.travaux, d.travauxCommentaire].filter(Boolean).join("\n");
         delete d.travauxCommentaire;
       }
-      corps = `<div class="item"><textarea data-travaux placeholder="Décrire les travaux supplémentaires…">${esc(d.travaux)}</textarea></div>`;
+      corps = `<div class="item"><textarea data-travaux placeholder="${t("checklist.travauxPlaceholder")}">${esc(d.travaux)}</textarea></div>`;
     } else {
       corps = sec.items.map((_, i) => itemHTML(f, si, i)).join("");
     }
@@ -241,8 +241,8 @@ function renderChecklist() {
   root.innerHTML = `
     <div class="card" id="summary-card"></div>
     <div class="toolbar">
-      <button type="button" id="all-ok">Tout mettre OK</button>
-      <button type="button" id="pdf" class="accent">Exporter en PDF</button>
+      <button type="button" id="all-ok">${t("checklist.toutOk")}</button>
+      <button type="button" id="pdf" class="accent">${t("checklist.exporter")}</button>
     </div>
     ${secs}${notes}`;
   updateAll();
@@ -291,9 +291,9 @@ function updateAll() {
   const pct = s.total ? Math.round(s.done / s.total * 100) : 0;
   let verdict = "";
   if (s.done === s.total) {
-    verdict = s.ko > 0 ? "⛔ Contrôle terminé : défauts (KO) à traiter"
-      : s.chef > 0 ? "⚠️ Contrôle terminé : points à voir avec le chef"
-      : "✅ Contrôle terminé : rien à signaler";
+    verdict = s.ko > 0 ? t("checklist.verdictKo")
+      : s.chef > 0 ? t("checklist.verdictChef")
+      : t("checklist.verdictOk");
   }
   const card = document.getElementById("summary-card");
   if (card) card.innerHTML = `
@@ -301,12 +301,12 @@ function updateAll() {
     <div class="progress"><div style="width:${pct}%"></div></div>
     <div class="summary">
       <span class="pill ok">${s.ok} OK</span>
-      <span class="pill chef">${s.chef} chef</span>
+      <span class="pill chef">${s.chef} ${t("checklist.pillChef")}</span>
       <span class="pill ko">${s.ko} KO</span>
-      <span class="pill afaire">${s.afaire} à faire</span>
+      <span class="pill afaire">${s.afaire} ${t("checklist.pillAfaire")}</span>
     </div>
-    ${f.finTravaux && s.aTraiter ? `<div class="hint">Fin de travaux : ${s.fin}/${s.aTraiter} validés</div>` : ""}
-    ${s.koSans ? `<div class="warn-line">⚠ ${s.koSans} KO sans commentaire</div>` : ""}
+    ${f.finTravaux && s.aTraiter ? `<div class="hint">${t("checklist.finTravauxValides", { fin: s.fin, total: s.aTraiter })}</div>` : ""}
+    ${s.koSans ? `<div class="warn-line">${t("checklist.koSans", { n: s.koSans })}</div>` : ""}
     <div class="verdict">${verdict}</div>`;
   updateBadge();
 }

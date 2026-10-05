@@ -1,14 +1,19 @@
 // Point d'entrée : navigation par onglets, réinitialisation, service worker.
-function showTab(name) {
-  state.admin = false;   // le catalogue se reverrouille dès qu'on quitte l'onglet
-  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === name));
-  document.querySelectorAll(".panel").forEach(p => p.classList.toggle("active", p.id === "tab-" + name));
+let ongletCourant = "choix";
+function renderOnglet(name) {
   if (name === "choix") renderChoix();
   if (name === "vehicule") renderVehicule();
   if (name === "checklist") renderChecklist();
   if (name === "pieces") renderPieces();
   if (name === "commande") renderCommande();
   if (name === "historique") renderHistorique();
+}
+function showTab(name) {
+  state.admin = false;   // le catalogue se reverrouille dès qu'on quitte l'onglet
+  ongletCourant = name;
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === name));
+  document.querySelectorAll(".panel").forEach(p => p.classList.toggle("active", p.id === "tab-" + name));
+  renderOnglet(name);
   window.scrollTo(0, 0);
 }
 
@@ -23,7 +28,7 @@ document.querySelectorAll(".tab").forEach(t =>
   t.addEventListener("click", () => showTab(t.dataset.tab)));
 
 document.getElementById("btn-reset").addEventListener("click", () => {
-  if (!confirm("Démarrer un nouveau contrôle ? Le contrôle en cours reste enregistré, vous pourrez le reprendre depuis la liste.")) return;
+  if (!confirm(t("app.nouveau.confirm"))) return;
   nouveauRapport();
   updateFicheName();
   updateBadge();
