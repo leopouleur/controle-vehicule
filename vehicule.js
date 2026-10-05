@@ -3,7 +3,6 @@ const VEHICULE_CHAMPS = [
   { id: "immat", label: "Immatriculation", type: "text", ph: "AB-123-CD" },
   { id: "vin", label: "OR atelier", type: "text" },
   { id: "orMagasin", label: "OR magasin", type: "text" },
-  { id: "km", label: "Kilométrage", type: "number", ph: "0" },
   { id: "date", label: "Date du contrôle", type: "date" },
   { id: "controleur", label: "Contrôleur", type: "text", full: true },
   { id: "remarques", label: "Remarques générales", type: "textarea", full: true }
