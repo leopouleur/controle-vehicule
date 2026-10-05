@@ -98,16 +98,17 @@ function reconnaitrePieces(texte) {
   return change;
 }
 
-// --- Surlignage des pièces « à débiter » dans le texte d'un commentaire ---
+// --- Surlignage : pièce déjà « à débiter » en bleu, reste du texte (= deviendra une pièce à commander) en rouge ---
 function surlignerPieces(texte) {
   const t = String(texte ?? "");
   if (!t) return "";
   let out = "", pos = 0;
+  const marque = (s, cls) => s ? `<span class="${cls}">${esc(s)}</span>` : "";
   plagesPieces(t, piecesADebiter()).forEach(([a, b]) => {
-    out += esc(t.slice(pos, a)) + `<span class="piece-trouvee">${esc(t.slice(a, b))}</span>`;
+    out += marque(t.slice(pos, a), "piece-a-commander") + marque(t.slice(a, b), "piece-trouvee");
     pos = b;
   });
-  return out + esc(t.slice(pos));
+  return out + marque(t.slice(pos), "piece-a-commander");
 }
 // --- Points « Contrôle niveau » et « Entretien selon PMS » : commentaire toujours en vert, jamais une pièce à commander ---
 function estInfoVerte(cle) {
@@ -131,15 +132,19 @@ function rafraichirSurlignage(ta) {
   hl.innerHTML = noteHL(ta.dataset.note, ta.value);
 }
 
-// --- Pièces à commander : tout commentaire non vide qui ne cite aucune pièce déjà « à débiter »
-// (et qui n'est pas un point « Contrôle niveau », toujours exclu de cette liste) ---
-function aPieceReconnue(texte) {
-  return plagesPieces(String(texte ?? ""), piecesADebiter()).length > 0;
+// --- Pièces à commander : tout mot, phrase ou lettre d'un commentaire qui ne cite aucune pièce déjà « à débiter »,
+// même mêlé dans le même champ à une pièce reconnue (et sauf sur un point « Contrôle niveau » / « Entretien selon PMS »,
+// toujours exclu de cette liste) ---
+function texteACommander(cle, texte) {
+  if (estInfoVerte(cle)) return "";
+  const t = String(texte ?? "");
+  if (!t.trim()) return "";
+  let reste = "", pos = 0;
+  plagesPieces(t, piecesADebiter()).forEach(([a, b]) => { reste += t.slice(pos, a); pos = b; });
+  reste += t.slice(pos);
+  return reste.replace(/[ \t]+/g, " ").replace(/^[\s,;.\-–—]+|[\s,;.\-–—]+$/g, "").trim();
 }
-function estACommander(cle, texte) {
-  const t = String(texte ?? "").trim();
-  return !!t && !aPieceReconnue(t) && !estInfoVerte(cle);
-}
+function estACommander(cle, texte) { return !!texteACommander(cle, texte); }
 function commandeHTML(cle, texte) {
   return `<div class="commande-qte" data-commande="${cle}" ${estACommander(cle, texte) ? "" : "hidden"}>
     <input type="number" class="qty" data-qte-commande="${cle}" min="1" inputmode="numeric"

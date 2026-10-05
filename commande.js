@@ -3,8 +3,9 @@
 //  - ajout manuel de pièces avant export
 function nouvelIdCommande() { return "m" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
-// Mêmes règles que le PDF (construireCommandePdf, pdf.js) : tout commentaire non vide qui ne cite aucune
-// pièce déjà « à débiter » et qui n'est pas un point « info » (Contrôle niveau / Entretien selon PMS).
+// Mêmes règles que le PDF (construireCommandePdf, pdf.js) : tout ce qui, dans le champ « Pièce à débiter / à commander »,
+// ne cite aucune pièce déjà « à débiter » — même mêlé à une pièce reconnue dans le même champ — et qui n'est pas un point
+// « info » (Contrôle niveau / Entretien selon PMS).
 function commandeDetectee() {
   const f = curFiche();
   if (!f) return [];
@@ -13,7 +14,8 @@ function commandeDetectee() {
   f.sections.forEach((sec, si) => {
     sec.items.forEach((_, i) => {
       const e = d.items[si + ":" + i] || {};
-      if (estACommander(si + ":" + i, e.note)) res.push({ cle: si + ":" + i, texte: (e.note || "").trim() });
+      const texte = texteACommander(si + ":" + i, e.note);
+      if (texte) res.push({ cle: si + ":" + i, texte });
     });
   });
   return res;
