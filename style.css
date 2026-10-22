@@ -306,6 +306,10 @@ button.link { background: none; border: 0; color: var(--primary); font-size: 13p
 .fe-nom input { display: block; width: 100%; padding: 3px 5px; margin: 1px 0; font-size: 13px; border-radius: 4px; text-align: center;
   background: rgba(255, 255, 255, .06); color: #fff; border: 1px solid rgba(160, 190, 220, .3); }
 .fe-nom input:focus { outline: 0; border-color: var(--fe-neon); box-shadow: 0 0 10px rgba(255, 77, 74, .45); }
+.fe-nom.fe-libre { padding: 0; }
+.fe-nom.fe-libre input { height: 100%; min-height: 32px; margin: 0; padding: 2px 6px; border: 0; border-radius: 0; background: transparent; box-shadow: none;
+  text-align: center; font-size: clamp(11px, 1.9vw, 15px); font-weight: 600; color: var(--fe-cyan); }
+.fe-nom.fe-libre input:focus { outline: 0; background: rgba(92, 225, 230, .08); box-shadow: inset 0 0 0 1px var(--fe-cyan), 0 0 12px rgba(92, 225, 230, .35); }
 .fe-batterie { flex-direction: column; gap: 6px; font-size: clamp(11px, 1.7vw, 14px); }
 .fe-batterie b { letter-spacing: .12em; color: var(--fe-cyan); text-shadow: none; }
 .fe-bat-choix { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; }

@@ -62,7 +62,8 @@ const I18N = {
     "checklist.verdictChef": "⚠️ Contrôle terminé : points à voir avec le chef",
     "checklist.verdictOk": "✅ Contrôle terminé : rien à signaler",
 
-    "pieces.aide": "Saisissez la quantité dans la 2e petite colonne : elle est imprimée sur la feuille. Une pièce écrite dans un commentaire de la checklist s'y place seule en quantité 1, modifiable ici.",
+    "pieces.aide": "Saisissez la quantité dans la 2e petite colonne : elle est imprimée sur la feuille. Une pièce écrite dans un commentaire de la checklist s'y place seule en quantité 1, modifiable ici. Les cases vides se touchent pour y noter ce que vous voulez : c'est imprimé aussi.",
+    "pieces.noteLibre": "Note libre",
     "pieces.exporter": "Exporter le contrôle en PDF",
     "pieces.verso": "Verso de la feuille",
     "pieces.nom": "NOM :",
@@ -172,7 +173,8 @@ const I18N = {
     "checklist.verdictChef": "⚠️ Kontrola završena: tačke za provjeru sa šefom",
     "checklist.verdictOk": "✅ Kontrola završena: nema primjedbi",
 
-    "pieces.aide": "Unesite količinu u 2. malu kolonu: ona se štampa na listu. Dio upisan u komentaru checkliste se tu sam postavlja u količini 1, što možete izmijeniti ovdje.",
+    "pieces.aide": "Unesite količinu u 2. malu kolonu: ona se štampa na listu. Dio upisan u komentaru checkliste se tu sam postavlja u količini 1, što možete izmijeniti ovdje. Prazna polja dodirnite da upišete šta želite: i to se štampa.",
+    "pieces.noteLibre": "Slobodna bilješka",
     "pieces.exporter": "Izvezi kontrolu u PDF",
     "pieces.verso": "Poleđina lista",
     "pieces.nom": "IME :",

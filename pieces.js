@@ -1,6 +1,7 @@
 // Onglet 4 : « Pièces à débiter » = la feuille papier « PIECES » (recto + verso), case par case.
 //  - 1re petite colonne : toujours vide (case à cocher de la feuille papier)
 //  - 2e petite colonne : quantité, à saisir ; une pièce écrite dans un commentaire de la checklist s'y met seule en quantité 1
+//  - cases vides : note libre (clavier au toucher), imprimée sur la feuille (state.notesFeuille)
 //  - modification des noms / références : protégée par mot de passe
 function updatePiecesBadge() {
   const b = document.getElementById("badge-pieces");
@@ -42,6 +43,8 @@ function grandeCaseHTML(c) {
         <span class="fe-bat"><input type="checkbox" id="bat-ok" data-bat="ok" ${tb.ok ? "checked" : ""}><label for="bat-ok">${t("pieces.testOk")}</label></span>
       </div></div>`;
   }
+  if (!state.admin && !c.etiquette && !c.nom.trim())   // case vide : note libre, imprimée sur la feuille
+    return `<div class="${cls} fe-libre"><input type="text" maxlength="80" data-note-feuille="${c.id}" value="${esc(state.notesFeuille[c.id] || "")}" aria-label="${t("pieces.noteLibre")}" autocomplete="off"></div>`;
   if (state.admin && !c.etiquette)
     return `<div class="${cls}"><input data-edit="${c.id}" data-champ="nom" value="${esc(c.nom)}" placeholder="${t("pieces.nomPlaceholder")}" aria-label="${t("pieces.nomPlaceholder")}">
       <input data-edit="${c.id}" data-champ="ref" value="${esc(c.ref)}" placeholder="${t("pieces.refPlaceholder")}" aria-label="${t("pieces.refPlaceholder")}"></div>`;
@@ -104,7 +107,10 @@ function renderPieces() {
   let sauveT = null;
   zone.addEventListener("input", ev => {
     const el = ev.target;
-    if (el.dataset.qte) {                                   // quantité : vide (ou 0) = pas de pièce
+    if (el.dataset.noteFeuille) {                           // note libre dans une case vide
+      const v = el.value.trim();
+      if (v) state.notesFeuille[el.dataset.noteFeuille] = el.value; else delete state.notesFeuille[el.dataset.noteFeuille];
+    } else if (el.dataset.qte) {                            // quantité : vide (ou 0) = pas de pièce
       const id = el.dataset.qte, v = el.value.trim();
       if (v && Number(v) > 0) { state.selection[id] = true; state.qtePieces[id] = v; }
       else { delete state.selection[id]; delete state.qtePieces[id]; }

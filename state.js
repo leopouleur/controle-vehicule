@@ -7,6 +7,7 @@ const state = {
   qteCommande: {}, // quantité saisie pour un commentaire « à commander » : { "si:i": "2" }
   commandeManuelle: [], // pièces à commander ajoutées à la main : [{ id, texte, qte }]
   testBatterie: {},     // bloc « TEST BATTERIE » de la feuille de pièces : { changee: true, ok: true }
+  notesFeuille: {},     // notes libres écrites dans les cases vides de la feuille de pièces : { "p1l26g": "texte" }
   admin: false,    // mode modification du catalogue (déverrouillé par mot de passe)    // infos du véhicule (partagées entre fiches)
   data: {},        // ficheId -> { items: { "sec:idx": {v, note, qty, fin, open} }, travaux: "" }
   rapportId: null  // id du rapport en cours dans la mémoire des rapports (rapports.js), une fois une fiche choisie

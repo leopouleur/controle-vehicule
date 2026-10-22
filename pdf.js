@@ -255,7 +255,9 @@ function construireChecklistPdf() {
 // Uniquement s'il y a au moins une pièce à débiter (ou un test batterie coché).
 function construirePiecesPdf() {
   const f = curFiche(), v = state.vehicule, tb = state.testBatterie;
-  if (!piecesADebiter().length && !tb.changee && !tb.ok) return null;
+  const notes = state.notesFeuille;
+  const aDesNotes = Object.values(notes).some(x => String(x || "").trim());
+  if (!piecesADebiter().length && !tb.changee && !tb.ok && !aDesNotes) return null;
 
   // Géométrie relevée sur la feuille scannée : 1 px du scan = PX mm ; colonnes = 2 petites cases, grande case, 2 petites cases, grande case
   const PX = 0.1306, X0 = 11.05, NOIR = [40, 52, 66], TEINTE = [238, 243, 248], ROUGE = [179, 50, 58], FIN = 0.2, EPAIS = 0.6;
@@ -278,6 +280,19 @@ function construirePiecesPdf() {
       x += largeur(winansi(sg.t), s, sg.gras);
     });
     return x;
+  };
+
+  // Note libre d'une case vide : une ligne si elle tient (police réduite jusqu'à 7,5 pt), sinon deux lignes à 7 pt
+  const BLEU_STYLO = [20, 70, 150];
+  const ecrireNote = (txt, xa, xb, haut, h) => {
+    const dispo = xb - xa - 2.5, brut = winansi(txt);
+    for (let s = 11; s >= 7.5; s -= 0.5)
+      if (largeur(brut, s, false) <= dispo) { ecrireCentre([{ t: txt, gras: false, couleur: BLEU_STYLO }], xa, xb, base(haut, h, s), s); return; }
+    const lignes = decouper(txt, dispo, 7, false).slice(0, 2);
+    lignes.forEach((l, k) => {
+      const yb = haut + h / 2 + (lignes.length === 1 ? 0.9 : k === 0 ? -0.5 : 2.6);
+      doc.text((xa + xb) / 2 - largeur(l, 7, false) / 2, yb, l, 7, false, BLEU_STYLO);
+    });
   };
 
   const dessinerGrille = (page, y0) => {
@@ -310,7 +325,11 @@ function construirePiecesPdf() {
           doc.text(xa + w * 0.58, tops[i] + hh * 0.74, winansi(`[${tb.ok ? "X" : " "}] Test OK`), 10, false, COUL.texte);
           return;
         }
-        if (!c.nom.trim()) return;
+        if (!c.nom.trim()) {                                  // case vide : note libre du technicien
+          const note = String(notes[c.id] || "").trim();
+          if (note) ecrireNote(note, xa, xb, tops[i], h);
+          return;
+        }
         if (c.etiquette) { ecrireCentre([{ t: c.nom, gras: false }], xa, xb, base(tops[i], h, 11), 11); return; }
         const taille = c.taille || 11, yb = base(tops[i], h, taille);
         const fin = ecrireCentre(segmentsCellule(c), xa, xb, yb, taille, c.trait ? c.trait * 0.995 : 0);
