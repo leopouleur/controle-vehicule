@@ -54,13 +54,14 @@ function grilleHTML(page) {
   return `<div class="fe-grille" style="grid-template-rows: ${lignes}">${cases}</div>`;
 }
 
-// En-tête de la feuille : NOM (contrôleur) et N° OR (OR magasin) viennent de l'onglet « Véhicule »
+// En-tête de la feuille : NOM (contrôleur), OR magasin et OR atelier viennent de l'onglet « Véhicule »
 function enteteHTML() {
   const v = state.vehicule;
   const sous = [v.immat, v.date && dateFR(v.date)].filter(Boolean).join(" · ");
   return `<div class="fe-entete">
     <div class="fe-boite fe-boite-nom"><b>${t("pieces.nom")}</b> ${esc(v.controleur || "")}${sous ? `<div class="fe-sous">${esc(sous)}</div>` : ""}</div>
-    <div class="fe-boite fe-boite-or"><b>${t("pieces.nOr")}</b> ${esc(v.orMagasin || "")}</div>
+    <div class="fe-boite fe-boite-or"><b>${t("pieces.orMagasin")}</b> ${esc(v.orMagasin || "")}
+      <div class="fe-or2"><b>${t("pieces.orAtelier")}</b> ${esc(v.vin || "")}</div></div>
     <div class="fe-boite fe-titre">${t("pieces.titreFeuille")}</div>
   </div>`;
 }

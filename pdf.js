@@ -322,7 +322,7 @@ function construirePiecesPdf() {
     return bas;
   };
 
-  // Recto : en-tête (NOM = contrôleur, N° OR = OR magasin) puis la grille
+  // Recto : en-tête (NOM = contrôleur, puis OR magasin et OR atelier) puis la grille
   doc.addPage();
   const hy = 8.5, hNom = 160 * PX, hTitre = 85 * PX;
   hLigne(XS[0], XS[6], hy, FIN);
@@ -333,8 +333,10 @@ function construirePiecesPdf() {
   doc.text(XS[0] + 2.5, hy + 11.5, winansi(v.controleur || ""), 15, true, COUL.texte);
   const sous = [v.immat && "Véhicule : " + v.immat, v.date && "Date : " + dateFR(v.date)].filter(Boolean).join("     ");
   if (sous) doc.text(XS[0] + 2.5, hy + 17.2, winansi(sous), 8.5, false, COUL.gris);
-  doc.text(XS[5] + 2.5, hy + 4.6, winansi("N °   O R"), 7.5, true, COUL.accent);
-  doc.text(XS[5] + 2.5, hy + 15, winansi(v.orMagasin || ""), 24, true, COUL.texte);
+  doc.text(XS[5] + 2.5, hy + 4.6, winansi("O R   M A G A S I N"), 7.5, true, COUL.accent);
+  doc.text(XS[5] + 2.5, hy + 12.2, winansi(v.orMagasin || ""), 18, true, COUL.texte);
+  doc.text(XS[5] + 2.5, hy + 18.6, winansi("O R   A T E L I E R"), 7.5, true, COUL.accent);
+  doc.text(XS[5] + 2.5, hy + 26.4, winansi(v.vin || ""), 18, true, COUL.texte);
   ecrireCentre([{ t: "P I E C E S", gras: true, couleur: COUL.accent }], XS[0], XS[5], base(hy + hNom, hTitre, 22), 22);
   dessinerGrille(FEUILLE[0], hy + hNom + hTitre);
 
@@ -380,9 +382,11 @@ function construireCommandePdf() {
   doc.rect(MARGE, py, PAGE_W - 2 * MARGE, 0.5, COUL.accent);
   py += 5;
   const resume = [v.immat && "Véhicule : " + v.immat, v.date && "Date : " + dateFR(v.date),
-    v.controleur && "Contrôleur : " + v.controleur, v.orMagasin && "N° OR : " + v.orMagasin]
+    v.controleur && "Contrôleur : " + v.controleur]
     .filter(Boolean).join("     ");
-  if (resume) { doc.text(MARGE, py + 2, winansi(resume), 9, false, COUL.texte); py += 7; }
+  if (resume) { doc.text(MARGE, py + 2, winansi(resume), 9, false, COUL.texte); py += 6; }
+  const ors = [v.orMagasin && "OR magasin : " + v.orMagasin, v.vin && "OR atelier : " + v.vin].filter(Boolean).join("     ");
+  if (ors) { doc.text(MARGE, py + 2, winansi(ors), 10, true, COUL.texte); py += 7; }
 
   const st = { y: py };
   tableau(doc, st, [26, 164], ["Quantité", "Dénomination"],
