@@ -1,8 +1,8 @@
 // Onglet 2 : « Véhicule »
 const VEHICULE_CHAMPS = [
   { id: "immat", labelKey: "vehicule.champ.immat", type: "text", ph: "AB-123-CD" },
-  { id: "vin", labelKey: "vehicule.champ.vin", type: "text" },
-  { id: "orMagasin", labelKey: "vehicule.champ.orMagasin", type: "text" },
+  { id: "vin", labelKey: "vehicule.champ.vin", type: "text", chiffres: true },
+  { id: "orMagasin", labelKey: "vehicule.champ.orMagasin", type: "text", chiffres: true },
   { id: "date", labelKey: "vehicule.champ.date", type: "date" },
   { id: "controleur", labelKey: "vehicule.champ.controleur", type: "text", full: true },
   { id: "remarques", labelKey: "vehicule.champ.remarques", type: "textarea", full: true }
@@ -25,7 +25,7 @@ function renderVehicule() {
     const input = c.type === "textarea"
       ? `<textarea id="v-${c.id}">${val}</textarea>`
       : `<input id="v-${c.id}" type="${c.type}" value="${val}" placeholder="${c.ph || ""}"
-           ${c.type === "number" ? 'inputmode="numeric"' : ""}
+           ${c.chiffres ? 'inputmode="numeric" pattern="[0-9]*" autocomplete="off"' : ""}
            ${c.id === "immat" ? 'autocapitalize="characters"' : ""}>`;
     return `<div class="${c.full ? "full" : ""}"><label for="v-${c.id}">${t(c.labelKey)}</label>${input}</div>`;
   }).join("");
@@ -36,7 +36,10 @@ function renderVehicule() {
 
   VEHICULE_CHAMPS.forEach(c => {
     const el = document.getElementById("v-" + c.id);
-    el.addEventListener("input", () => { state.vehicule[c.id] = el.value; });
+    el.addEventListener("input", () => {
+      if (c.chiffres && /\D/.test(el.value)) el.value = el.value.replace(/\D/g, "");   // OR : chiffres uniquement
+      state.vehicule[c.id] = el.value;
+    });
   });
   document.getElementById("go-checklist").addEventListener("click", () => showTab("checklist"));
 }

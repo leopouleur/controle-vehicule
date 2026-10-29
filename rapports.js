@@ -19,7 +19,7 @@ function sauverRapportCourant() {
   tous[state.rapportId] = {
     id: state.rapportId, fiche: state.fiche,
     vehicule: state.vehicule, selection: state.selection, qtePieces: state.qtePieces,
-    qteCommande: state.qteCommande, commandeManuelle: state.commandeManuelle, testBatterie: state.testBatterie, notesFeuille: state.notesFeuille, data: state.data,
+    qteCommande: state.qteCommande, commandeManuelle: state.commandeManuelle, testBatterie: state.testBatterie, notesFeuille: state.notesFeuille, valide: state.valide, data: state.data,
     majLe: Date.now(),
     exporteLe: tous[state.rapportId]?.exporteLe || null
   };
@@ -58,6 +58,7 @@ function nouveauRapport() {
   state.commandeManuelle = [];
   state.testBatterie = {};
   state.notesFeuille = {};
+  state.valide = false;
   state.admin = false;
   state.rapportId = null;
   openCats.clear();
@@ -75,6 +76,7 @@ function reprendreRapport(id) {
   state.commandeManuelle = r.commandeManuelle || [];
   state.testBatterie = r.testBatterie || {};
   state.notesFeuille = r.notesFeuille || {};
+  state.valide = !!r.valide;
   state.data = r.data || {};
   state.admin = false;
   openCats.clear();
@@ -90,8 +92,10 @@ function rapportLigneHTML(r) {
   const immat = (r.vehicule && r.vehicule.immat) ? r.vehicule.immat : t("historique.sansImmat");
   const dateC = r.vehicule && r.vehicule.date ? t("historique.controleDu", { date: dateFR(r.vehicule.date) }) : "";
   const courant = r.id === state.rapportId;
-  const meta = [dateC, r.exporteLe ? t("historique.pdfExporte") : "", courant ? t("historique.enCours") : ""].filter(Boolean).join(" · ");
-  return `<div class="rapport-row ${courant ? "courant" : ""}" data-reprendre="${r.id}">
+  const meta = [dateC, t(r.valide ? "historique.valide" : "historique.nonValide"), r.exporteLe ? t("historique.pdfExporte") : "", courant ? t("historique.enCours") : ""].filter(Boolean).join(" · ");
+  const etat = r.valide ? "valide" : "encours";   // vert si validé, rouge tant que le contrôle est en cours
+  return `<div class="rapport-row ${etat} ${courant ? "courant" : ""}" data-reprendre="${r.id}">
+    <span class="rapport-pastille" title="${t(r.valide ? "historique.valide" : "historique.nonValide")}"></span>
     <div class="rapport-info">
       <span class="rapport-titre">${esc(f ? f.nom : r.fiche)} · ${esc(immat)}</span>
       <span class="rapport-meta">${esc(meta)}</span>

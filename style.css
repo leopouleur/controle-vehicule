@@ -224,6 +224,13 @@ button.link { background: none; border: 0; color: var(--primary); font-size: 13p
 .rapport-titre { font-weight: 600; font-size: 15px; }
 .rapport-meta { font-size: 12px; color: var(--muted); }
 .rapport-row.courant .rapport-titre { color: var(--primary); }
+.rapport-pastille { flex: none; width: 14px; height: 14px; border-radius: 50%; background: var(--ko); }
+.rapport-row.valide .rapport-pastille { background: var(--ok); }
+.rapport-row.encours { border-left: 4px solid var(--ko); }
+.rapport-row.valide { border-left: 4px solid var(--ok); }
+.rapport-row .rapport-info { flex: 1; }
+.valider-btn { display: block; width: 100%; margin: 18px 0 8px; padding: 16px; font-size: 17px; font-weight: 700; border-radius: 12px; border: 2px solid var(--ok); background: transparent; color: var(--ok); }
+.valider-btn.fait { background: var(--ok); color: #fff; }
 .rapport-row .del.arme { background: var(--ko); color: #fff; border-color: var(--ko); }
 @media (max-width: 420px) { .mt { margin-top: 14px; }
 .item .note-split { grid-template-columns: 1fr; }

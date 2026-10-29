@@ -244,8 +244,18 @@ function renderChecklist() {
       <button type="button" id="all-ok">${t("checklist.toutOk")}</button>
       <button type="button" id="pdf" class="accent">${t("checklist.exporter")}</button>
     </div>
-    ${secs}${notes}`;
+    ${secs}${notes}
+    <button type="button" id="valider" class="valider-btn"></button>`;
+  majBoutonValider();
   updateAll();
+}
+
+// Bouton « Validé » en bas du contrôle : passe le rapport au vert dans l'historique (2e appui = annule).
+function majBoutonValider() {
+  const b = document.getElementById("valider");
+  if (!b) return;
+  b.textContent = t(state.valide ? "checklist.valide" : "checklist.valider");
+  b.classList.toggle("fait", !!state.valide);
 }
 
 function stats() {
@@ -382,6 +392,10 @@ function initChecklist() {
       renderChecklist();
     } else if (t.id === "pdf") {
       exportPdf();
+    } else if (t.id === "valider") {
+      state.valide = !state.valide;
+      majBoutonValider();
+      sauverRapportCourant();
     }
   });
 
