@@ -1,7 +1,8 @@
 // Onglet 4 : « Pièces à débiter » = la feuille papier « PIECES » (recto + verso), case par case.
 //  - 1re petite colonne : toujours vide (case à cocher de la feuille papier)
 //  - 2e petite colonne : quantité, à saisir ; une pièce écrite dans un commentaire de la checklist s'y met seule en quantité 1
-//  - cases vides : note libre (clavier au toucher), imprimée sur la feuille (state.notesFeuille)
+//  - cases vides : note libre (clavier au toucher), imprimée sur la feuille (state.notesFeuille), avec sa propre
+//    quantité dans la 2e petite colonne (state.qteNotesFeuille)
 //  - modification des noms / références : protégée par mot de passe
 function updatePiecesBadge() {
   const b = document.getElementById("badge-pieces");
@@ -23,10 +24,14 @@ function texteCelluleHTML(c) {
 // Les deux petites cases (coche + quantité) d'un côté de la feuille
 function petitesCasesHTML(c) {
   const piece = !c.etiquette && !c.speciale && c.nom.trim();
+  const libre = !c.etiquette && !c.speciale && !c.nom.trim();   // case vide : note libre, a aussi sa quantité
   const choisie = !!(piece && state.selection[c.id]);
-  const qte = piece && !state.admin
-    ? `<input type="number" data-qte="${c.id}" min="1" inputmode="numeric" value="${choisie ? esc(state.qtePieces[c.id] || "1") : ""}" aria-label="${t("checklist.qte")} : ${esc(c.nom)}">`
-    : "";
+  let qte = "";
+  if (piece && !state.admin) {
+    qte = `<input type="number" data-qte="${c.id}" min="1" inputmode="numeric" value="${choisie ? esc(state.qtePieces[c.id] || "1") : ""}" aria-label="${t("checklist.qte")} : ${esc(c.nom)}">`;
+  } else if (libre && !state.admin) {
+    qte = `<input type="number" data-qte-note="${c.id}" min="1" inputmode="numeric" value="${esc(state.qteNotesFeuille[c.id] || "")}" aria-label="${t("checklist.qte")}">`;
+  }
   return `<div class="fe-c fe-case"></div><div class="fe-c fe-qte">${qte}</div>`;
 }
 
@@ -110,6 +115,9 @@ function renderPieces() {
     if (el.dataset.noteFeuille) {                           // note libre dans une case vide
       const v = el.value.trim();
       if (v) state.notesFeuille[el.dataset.noteFeuille] = el.value; else delete state.notesFeuille[el.dataset.noteFeuille];
+    } else if (el.dataset.qteNote) {                        // quantité associée à une note libre
+      const id = el.dataset.qteNote, v = el.value.trim();
+      if (v && Number(v) > 0) state.qteNotesFeuille[id] = v; else delete state.qteNotesFeuille[id];
     } else if (el.dataset.qte) {                            // quantité : vide (ou 0) = pas de pièce
       const id = el.dataset.qte, v = el.value.trim();
       if (v && Number(v) > 0) { state.selection[id] = true; state.qtePieces[id] = v; }

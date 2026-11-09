@@ -277,7 +277,7 @@ function construireChecklistPdf(doc) {
 // Uniquement s'il y a au moins une pièce à débiter (ou un test batterie coché).
 function construirePiecesPdf(doc) {
   const f = curFiche(), v = state.vehicule, tb = state.testBatterie;
-  const notes = state.notesFeuille;
+  const notes = state.notesFeuille, qteNotes = state.qteNotesFeuille;
   const aDesNotes = Object.values(notes).some(x => String(x || "").trim());
   if (!piecesADebiter().length && !tb.changee && !tb.ok && !aDesNotes) return false;
   const debut = doc.pages.length;
@@ -349,7 +349,11 @@ function construirePiecesPdf(doc) {
         }
         if (!c.nom.trim()) {                                  // case vide : note libre du technicien
           const note = String(notes[c.id] || "").trim();
-          if (note) ecrireNote(note, xa, xb, tops[i], h);
+          if (note) {
+            ecrireNote(note, xa, xb, tops[i], h);
+            const qte = qteNotes[c.id];
+            if (qte) ecrireCentre([{ t: qte, gras: true, couleur: COUL.accent }], XS[k + 1], XS[k + 2], base(tops[i], h, 12), 12);
+          }
           return;
         }
         if (c.etiquette) { ecrireCentre([{ t: c.nom, gras: false }], xa, xb, base(tops[i], h, 11), 11); return; }
