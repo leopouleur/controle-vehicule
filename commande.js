@@ -73,7 +73,7 @@ function renderCommande() {
     <button class="primary-btn" id="pdf-commande" type="button">${t("commande.exporter")}</button>`;
   refreshCommande();
 
-  document.getElementById("pdf-commande").addEventListener("click", exportPdf);
+  document.getElementById("pdf-commande").addEventListener("click", ouvrirExportModal);
 
   document.getElementById("commande-detectee").addEventListener("input", ev => {
     const cle = ev.target.dataset.qteAuto; if (!cle) return;

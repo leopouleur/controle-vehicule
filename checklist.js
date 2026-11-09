@@ -15,6 +15,16 @@ function besoinTravaux(type, v) {
 const compte = s => s.type === "std" || s.type === "diag" || s.type === "pms";
 const openCats = new Set();
 
+// --- Quantité / viscosité PMS : quasi toujours la même valeur d'un véhicule à l'autre, mémorisée globalement
+// sur l'appareil (par nom de point, partagée entre fiches) et proposée en suggestion pour éviter de retaper ---
+const CLE_QTE_PMS = "controle-vehicule-qte-pms-v1";
+function chargerQtePms() {
+  try { const o = JSON.parse(localStorage.getItem(CLE_QTE_PMS) || "{}"); return o && typeof o === "object" ? o : {}; }
+  catch (e) { return {}; }
+}
+let QTE_PMS = chargerQtePms();
+function sauverQtePms() { try { localStorage.setItem(CLE_QTE_PMS, JSON.stringify(QTE_PMS)); } catch (e) { /* stockage indisponible : tant pis */ } }
+
 // --- Suggestions de pièces (depuis l'onglet « Pièces à débiter ») ---
 const norm = t => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[’‘]/g, "'").toLowerCase();
 
@@ -178,6 +188,9 @@ function itemHTML(f, si, i) {
   let extra = "";
   if (sec.type === "pms") {
     extra += `<input class="qty" data-qty="${key}" value="${esc(e.qty)}" placeholder="${t("checklist.qteViscosite")}">`;
+    const sugg = QTE_PMS[sec.items[i]];
+    if (sugg) extra += `<button type="button" class="qty-sugg" data-qty-sugg="${key}" data-val="${esc(sugg)}" ${e.qty ? "hidden" : ""}
+      aria-label="${t("checklist.reprendreValeur")} : ${esc(sugg)}">↺ ${esc(sugg)}</button>`;
   }
   if (f.finTravaux && travaux) {
     extra += `<div class="fin"><span>${t("checklist.finTravaux")}</span>
@@ -311,8 +324,8 @@ function updateAll() {
     <div class="progress"><div style="width:${pct}%"></div></div>
     <div class="summary">
       <span class="pill ok">${s.ok} OK</span>
-      <span class="pill chef">${s.chef} ${t("checklist.pillChef")}</span>
-      <span class="pill ko">${s.ko} KO</span>
+      <button type="button" class="pill chef" data-pill="chef" ${s.chef ? "" : "disabled"}>${s.chef} ${t("checklist.pillChef")}</button>
+      <button type="button" class="pill ko" data-pill="ko" ${s.ko ? "" : "disabled"}>${s.ko} KO</button>
       <span class="pill afaire">${s.afaire} ${t("checklist.pillAfaire")}</span>
     </div>
     ${f.finTravaux && s.aTraiter ? `<div class="hint">${t("checklist.finTravauxValides", { fin: s.fin, total: s.aTraiter })}</div>` : ""}
@@ -337,6 +350,58 @@ function refreshItem(si, i) {
   updateAll();
 }
 
+// --- Pop-up « points KO » / « points pour le chef » : liste des points dans cet état, clic = y aller directement ---
+function pointsParEtat(etat) {
+  const f = curFiche(); if (!f) return [];
+  const d = fdata();
+  const res = [];
+  f.sections.forEach((sec, si) => {
+    if (sec.type === "travaux") return;
+    sec.items.forEach((nom, i) => {
+      const e = d.items[si + ":" + i] || {};
+      if (e.v === etat) res.push({ si, i, section: sec.titre, nom, commentaire: (e.commentaire || e.note || "").trim() });
+    });
+  });
+  return res;
+}
+function fermerPointsModal() {
+  const m = document.getElementById("points-modal");
+  if (m) m.hidden = true;
+}
+function allerAuPoint(si, i) {
+  openCats.add(si);
+  const det = document.querySelector(`details.cat[data-cat="${si}"]`);
+  if (det) det.open = true;
+  const el = document.getElementById(`it-${si}-${i}`);
+  if (!el) return;
+  el.scrollIntoView({ block: "center", behavior: "smooth" });
+  el.classList.add("item-surligne");
+  setTimeout(() => el.classList.remove("item-surligne"), 1600);
+}
+function ouvrirPointsModal(etat) {
+  const liste = pointsParEtat(etat);
+  const m = document.getElementById("points-modal"), card = document.getElementById("points-modal-card");
+  if (!m || !card) return;
+  card.innerHTML = `<h2>${t(etat === "ko" ? "checklist.popupKo" : "checklist.popupChef", { n: liste.length })}</h2>
+    ${liste.length ? `<div class="points-liste">${liste.map(p => `
+      <button type="button" class="points-ligne" data-aller="${p.si}:${p.i}">
+        <span class="points-section">${esc(p.section)}</span>
+        <span class="points-nom">${esc(p.nom)}</span>
+        ${p.commentaire ? `<span class="points-commentaire">${esc(p.commentaire)}</span>` : ""}
+      </button>`).join("")}</div>` : `<p class="hint">${t("checklist.popupVide")}</p>`}
+    <button type="button" class="link" id="points-fermer">${t("commun.fermer")}</button>`;
+  card.querySelectorAll("[data-aller]").forEach(b => b.addEventListener("click", () => {
+    const [si, i] = b.dataset.aller.split(":").map(Number);
+    fermerPointsModal();
+    allerAuPoint(si, i);
+  }));
+  document.getElementById("points-fermer").addEventListener("click", fermerPointsModal);
+  m.hidden = false;
+}
+document.getElementById("points-modal")?.addEventListener("click", ev => {
+  if (ev.target.id === "points-modal") fermerPointsModal();
+});
+
 function initChecklist() {
   const root = document.getElementById("tab-checklist");
 
@@ -356,6 +421,15 @@ function initChecklist() {
       updatePiecesBadge();
       box.innerHTML = "";
       ta.focus();
+      return;
+    }
+    if (t.dataset.qtySugg) {                  // reprend la quantité / viscosité mémorisée pour ce point
+      const inp = document.querySelector(`[data-qty="${t.dataset.qtySugg}"]`);
+      if (inp) { inp.value = t.dataset.val; inp.dispatchEvent(new Event("input", { bubbles: true })); }
+      return;
+    }
+    if (t.dataset.pill) {                     // pastille KO / chef : liste des points concernés
+      ouvrirPointsModal(t.dataset.pill);
       return;
     }
     if (t.dataset.v) {                        // choix d'un état
@@ -391,7 +465,7 @@ function initChecklist() {
       });
       renderChecklist();
     } else if (t.id === "pdf") {
-      exportPdf();
+      ouvrirExportModal();
     } else if (t.id === "valider") {
       state.valide = !state.valide;
       majBoutonValider();
@@ -404,7 +478,17 @@ function initChecklist() {
     if (el.dataset.note && !estInfoVerte(el.dataset.note) && reconnaitrePieces(el.value)) updatePiecesBadge();   // pièce citée en toutes lettres : quantité 1
     if (el.dataset.note) { (d.items[el.dataset.note] ||= {}).note = el.value; rafraichirCommande(el.dataset.note, el.value); }
     else if (el.dataset.commentaire) { (d.items[el.dataset.commentaire] ||= {}).commentaire = el.value; updateAll(); }
-    else if (el.dataset.qty) (d.items[el.dataset.qty] ||= {}).qty = el.value;
+    else if (el.dataset.qty) {
+      (d.items[el.dataset.qty] ||= {}).qty = el.value;
+      const chip = document.querySelector(`[data-qty-sugg="${el.dataset.qty}"]`);
+      const v = el.value.trim();
+      if (chip) chip.hidden = !!v;
+      if (v) {
+        const [si, i] = el.dataset.qty.split(":").map(Number);
+        const nom = curFiche()?.sections[si]?.items[i];
+        if (nom && QTE_PMS[nom] !== v) { QTE_PMS[nom] = v; sauverQtePms(); }
+      }
+    }
     else if ("travaux" in el.dataset) d.travaux = el.value;
     else if (el.dataset.qteCommande) {
       const v = el.value.trim();

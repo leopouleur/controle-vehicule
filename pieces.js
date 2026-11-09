@@ -101,7 +101,7 @@ function renderPieces() {
     </div>
     <button class="primary-btn btn-export mt" type="button">${t("pieces.exporter")}</button>`;
   updatePiecesBadge();
-  root.querySelectorAll(".btn-export").forEach(b => b.addEventListener("click", exportPdf));
+  root.querySelectorAll(".btn-export").forEach(b => b.addEventListener("click", ouvrirExportModal));
 
   const zone = document.getElementById("feuille-zone");
   let sauveT = null;

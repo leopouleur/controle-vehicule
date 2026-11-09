@@ -105,11 +105,23 @@ textarea { min-height: 70px; resize: vertical; }
 .progress { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; margin: 8px 0; }
 .progress > div { height: 100%; background: var(--ok); width: 0; transition: width .2s; }
 .summary { display: flex; gap: 8px; flex-wrap: wrap; font-size: 13px; }
-.pill { padding: 3px 10px; border-radius: 12px; color: #fff; }
+.pill { padding: 3px 10px; border-radius: 12px; color: #fff; border: 0; font: inherit; }
 .pill.ok { background: var(--ok); } .pill.chef, .pill.afaire { background: var(--warn); }
 .pill.ko { background: var(--ko); }
+button.pill { cursor: pointer; }
+button.pill:disabled { opacity: .55; cursor: default; }
 .verdict { margin-top: 10px; font-weight: 600; }
 .card .hint { margin: 8px 0 0; }
+.points-liste { display: flex; flex-direction: column; gap: 8px; margin: 4px 0 16px; max-height: 50vh; overflow-y: auto; }
+.points-ligne {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; text-align: left;
+  padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text);
+}
+.points-section { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.points-nom { font-size: 14px; font-weight: 600; }
+.points-commentaire { font-size: 13px; color: var(--muted); }
+@keyframes item-flash { 0% { background: color-mix(in srgb, var(--primary) 25%, transparent); } 100% { background: transparent; } }
+.item-surligne { animation: item-flash 1.6s ease; }
 
 details.cat { background: var(--card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px; }
 details.cat > summary {
@@ -137,6 +149,11 @@ details.cat .count { font-size: 12px; color: var(--muted); font-weight: 400; }
 .fin button { flex: 0 0 auto; padding: 7px 14px; }
 .item textarea { margin-top: 8px; min-height: 54px; font-size: 14px; }
 .item .qty { margin-top: 8px; font-size: 14px; }
+.qty-sugg {
+  display: inline-block; margin: 6px 8px 0 0; padding: 7px 12px; border-radius: 16px;
+  border: 1px solid var(--primary); background: color-mix(in srgb, var(--primary) 10%, var(--card));
+  color: var(--primary); font-size: 13px;
+}
 textarea.ko-note:placeholder-shown { border-color: var(--ko); }
 .item .note-split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; align-items: start; }
 .item .note-split textarea { margin-top: 0; }
@@ -166,6 +183,22 @@ textarea.ko-note:placeholder-shown { border-color: var(--ko); }
 .toast { position: fixed; left: 16px; right: 16px; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); z-index: 20;
   max-width: 560px; margin: 0 auto; padding: 12px 16px; border-radius: 10px; background: var(--text); color: var(--bg);
   font-size: 14px; text-align: center; box-shadow: 0 4px 16px rgba(0,0,0,.25); }
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center;
+  padding: 16px; background: rgba(0,0,0,.5);
+}
+.modal-card {
+  width: 100%; max-width: 420px; max-height: calc(100vh - 32px); overflow-y: auto;
+  background: var(--card); border-radius: 14px; padding: 20px; box-shadow: 0 12px 32px rgba(0,0,0,.35);
+}
+.modal-card h2 { margin: 0 0 10px; font-size: 17px; color: var(--primary); }
+.modal-card .primary-btn { margin-bottom: 10px; }
+.modal-card .primary-btn:last-of-type { margin-bottom: 0; }
+.modal-card .primary-btn.ghost-modal { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+.modal-card button.link { display: block; width: 100%; text-align: center; margin-top: 12px; padding: 6px; }
+.export-options { display: flex; flex-direction: column; gap: 10px; margin: 4px 0 16px; }
+.export-opt { display: flex; align-items: center; gap: 10px; font-size: 15px; color: var(--text); cursor: pointer; }
+.export-opt input { width: 20px; height: 20px; flex: 0 0 auto; padding: 0; accent-color: var(--primary); }
 .install-banner {
   position: sticky; top: 0; z-index: 6; display: flex; align-items: center; gap: 12px;
   padding: 10px 16px; background: var(--primary); color: #fff; font-size: 13px;

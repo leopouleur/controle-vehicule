@@ -160,9 +160,38 @@ function dateFR(iso) {
   return m ? `${m[3]}/${m[2]}/${m[1]}` : (iso || "");
 }
 
-function construireChecklistPdf() {
-  const f = curFiche(), d = fdata(), v = state.vehicule;
+// --- Pieds de page : chaque feuille pose son étiquette sur ses propres pages ; la numérotation « Page X/Y »
+// n'est posée qu'une fois toutes les feuilles ajoutées, pour compter le total réel du PDF combiné ---
+function appliquerPiedDePage(doc, debut, pied, y) {
+  doc._pieds = doc._pieds || [];
+  doc._pieds.push({ debut, fin: doc.pages.length, pied, y });
+}
+function finaliserPiedsDePage(doc) {
+  const n = doc.pages.length;
+  (doc._pieds || []).forEach(({ debut, fin, pied, y }) => {
+    for (let i = debut; i < fin; i++) {
+      doc.cur = doc.pages[i];
+      doc.text(MARGE, y, winansi(pied), 7, false, COUL.gris);
+      doc.text(PAGE_W - MARGE, y, winansi(`Page ${i + 1}/${n}`), 7, false, COUL.gris, true);
+    }
+  });
+}
+
+// --- Rapport PDF unique : combine, dans un seul document, les feuilles sélectionnées ---
+function construireRapportPdf(sel) {
   const doc = new PdfDoc();
+  let ok = false;
+  if (sel.checklist && construireChecklistPdf(doc)) ok = true;
+  if (sel.pieces && construirePiecesPdf(doc)) ok = true;
+  if (sel.commande && construireCommandePdf(doc)) ok = true;
+  if (!ok) return null;
+  finaliserPiedsDePage(doc);
+  return doc.build();
+}
+
+function construireChecklistPdf(doc) {
+  const f = curFiche(), d = fdata(), v = state.vehicule;
+  const debut = doc.pages.length;
   doc.addPage();
   let y = 12;
 
@@ -240,30 +269,23 @@ function construireChecklistPdf() {
     lg.forEach((l, k) => doc.text(MARGE, st.y + 4 + k * 3.2, l, 7, false, COUL.gris));
   }
 
-  // Pieds de page
-  const n = doc.pages.length;
-  const pied = [f.nom, v.immat].filter(Boolean).join(" · ");
-  for (let i = 0; i < n; i++) {
-    doc.cur = doc.pages[i];
-    doc.text(MARGE, 291, winansi(pied), 7, false, COUL.gris);
-    doc.text(PAGE_W - MARGE, 291, winansi(`Page ${i + 1}/${n}`), 7, false, COUL.gris, true);
-  }
-  return doc.build();
+  appliquerPiedDePage(doc, debut, [f.nom, v.immat].filter(Boolean).join(" · "), 291);
+  return true;
 }
 
 // --- PDF « Pièces à débiter » : la feuille papier « PIECES » en entier (recto + verso), quantités remplies ---
 // Uniquement s'il y a au moins une pièce à débiter (ou un test batterie coché).
-function construirePiecesPdf() {
+function construirePiecesPdf(doc) {
   const f = curFiche(), v = state.vehicule, tb = state.testBatterie;
   const notes = state.notesFeuille;
   const aDesNotes = Object.values(notes).some(x => String(x || "").trim());
-  if (!piecesADebiter().length && !tb.changee && !tb.ok && !aDesNotes) return null;
+  if (!piecesADebiter().length && !tb.changee && !tb.ok && !aDesNotes) return false;
+  const debut = doc.pages.length;
 
   // Géométrie relevée sur la feuille scannée : 1 px du scan = PX mm ; colonnes = 2 petites cases, grande case, 2 petites cases, grande case
   const PX = 0.1306, X0 = 11.05, NOIR = [40, 52, 66], TEINTE = [238, 243, 248], ROUGE = [179, 50, 58], FIN = 0.2, EPAIS = 0.6;
   const XS = [X0];
   [70, 75.5, 513, 71, 80, 629.5].forEach(w => XS.push(XS[XS.length - 1] + w * PX));
-  const doc = new PdfDoc();
   const hLigne = (x1, x2, y, ep, rgb) => doc.rect(x1, y - ep / 2, x2 - x1, ep, rgb || NOIR);
   const vLigne = (x, y1, y2, ep, rgb) => doc.rect(x - ep / 2, y1, ep, y2 - y1, rgb || NOIR);
   const bandeau = y => doc.rect(XS[0], y, XS[6] - XS[0], 0.9, COUL.accent);   // liseré rouge en haut de chaque page
@@ -364,19 +386,13 @@ function construirePiecesPdf() {
   bandeau(10 - 2.4);
   dessinerGrille(FEUILLE[1], 10);
 
-  const n = doc.pages.length;
-  const pied = ["Pièces à débiter", f.nom, v.immat].filter(Boolean).join(" · ");
-  for (let i = 0; i < n; i++) {
-    doc.cur = doc.pages[i];
-    doc.text(MARGE, 293.5, winansi(pied), 7, false, COUL.gris);
-    doc.text(PAGE_W - MARGE, 293.5, winansi(`Page ${i + 1}/${n}`), 7, false, COUL.gris, true);
-  }
-  return doc.build();
+  appliquerPiedDePage(doc, debut, ["Pièces à débiter", f.nom, v.immat].filter(Boolean).join(" · "), 293.5);
+  return true;
 }
 
 // --- PDF « Pièces à commander » : commentaires non vides qui ne citent aucune pièce déjà « à débiter »,
 // plus les pièces ajoutées à la main dans l'onglet « Pièces à commander » ---
-function construireCommandePdf() {
+function construireCommandePdf(doc) {
   const f = curFiche(), d = fdata(), v = state.vehicule;
   const lignes = [];
   f.sections.forEach((sec, si) => {
@@ -390,9 +406,9 @@ function construireCommandePdf() {
     const texte = (m.texte || "").trim();
     if (texte) lignes.push({ qte: m.qte || "1", texte });
   });
-  if (!lignes.length) return null;
+  if (!lignes.length) return false;
+  const debut = doc.pages.length;
 
-  const doc = new PdfDoc();
   doc.addPage();
   let py = 12;
   doc.text(MARGE, py + 5, winansi("PIÈCES À COMMANDER"), 16, true, COUL.accent);
@@ -414,14 +430,8 @@ function construireCommandePdf() {
       { t: l.texte }
     ] })));
 
-  const n = doc.pages.length;
-  const pied = ["Pièces à commander", f.nom, v.immat].filter(Boolean).join(" · ");
-  for (let i = 0; i < n; i++) {
-    doc.cur = doc.pages[i];
-    doc.text(MARGE, 291, winansi(pied), 7, false, COUL.gris);
-    doc.text(PAGE_W - MARGE, 291, winansi(`Page ${i + 1}/${n}`), 7, false, COUL.gris, true);
-  }
-  return doc.build();
+  appliquerPiedDePage(doc, debut, ["Pièces à commander", f.nom, v.immat].filter(Boolean).join(" · "), 291);
+  return true;
 }
 
 // --- Livraison du fichier -----------------------------------------------------
@@ -431,39 +441,79 @@ function toast(msg) {
   clearTimeout(toast.t); toast.t = setTimeout(() => { el.hidden = true; }, 3500);
 }
 
-async function exportPdf() {
+// --- Pop-up d'export : « Tout imprimer » ou choisir les feuilles à imprimer ---
+function fermerExportModal() {
+  const m = document.getElementById("export-modal");
+  if (m) m.hidden = true;
+}
+function rendreEtapeChoixExport(card) {
+  card.innerHTML = `<h2>${t("export.titre")}</h2>
+    <p class="hint">${t("export.hint")}</p>
+    <button type="button" class="primary-btn" id="exp-tout">${t("export.tout")}</button>
+    <button type="button" class="primary-btn ghost-modal" id="exp-selection">${t("export.selection")}</button>
+    <button type="button" class="link" id="exp-annuler">${t("export.annuler")}</button>`;
+  document.getElementById("exp-tout").addEventListener("click", () => { fermerExportModal(); exportPdf(); });
+  document.getElementById("exp-selection").addEventListener("click", () => rendreEtapeSelectionExport(card));
+  document.getElementById("exp-annuler").addEventListener("click", fermerExportModal);
+}
+const FEUILLES_EXPORT = [
+  { id: "checklist", cle: "export.feuilleControle" },
+  { id: "pieces", cle: "export.feuillePieces" },
+  { id: "commande", cle: "export.feuilleCommande" }
+];
+function rendreEtapeSelectionExport(card) {
+  card.innerHTML = `<h2>${t("export.selection")}</h2>
+    <div class="export-options">${FEUILLES_EXPORT.map(o => `
+      <label class="export-opt"><input type="checkbox" id="exp-${o.id}" checked> ${esc(t(o.cle))}</label>`).join("")}</div>
+    <button type="button" class="primary-btn" id="exp-confirmer">${t("export.exporter")}</button>
+    <button type="button" class="link" id="exp-retour">${t("commun.retour")}</button>`;
+  document.getElementById("exp-confirmer").addEventListener("click", () => {
+    const sel = {};
+    FEUILLES_EXPORT.forEach(o => sel[o.id] = document.getElementById(`exp-${o.id}`).checked);
+    fermerExportModal();
+    exportPdf(sel);
+  });
+  document.getElementById("exp-retour").addEventListener("click", () => rendreEtapeChoixExport(card));
+}
+function ouvrirExportModal() {
+  if (!curFiche()) { toast(t("commun.choisirDabord")); return; }
+  const m = document.getElementById("export-modal"), card = document.getElementById("export-modal-card");
+  if (!m || !card) return;
+  rendreEtapeChoixExport(card);
+  m.hidden = false;
+}
+document.getElementById("export-modal")?.addEventListener("click", ev => {
+  if (ev.target.id === "export-modal") fermerExportModal();
+});
+
+async function exportPdf(sel) {
+  sel = sel || { checklist: true, pieces: true, commande: true };
   const f = curFiche();
   if (!f) { toast(t("commun.choisirDabord")); return; }
-  let checklistBlob, piecesBlob, commandeBlob;
-  try {
-    checklistBlob = construireChecklistPdf();
-    piecesBlob = construirePiecesPdf();
-    commandeBlob = construireCommandePdf();
-  } catch (err) { toast(t("pdf.toastErreurPdf", { msg: err.message })); return; }
+  let blob;
+  try { blob = construireRapportPdf(sel); }
+  catch (err) { toast(t("pdf.toastErreurPdf", { msg: err.message })); return; }
+  if (!blob) { toast(t("export.aucuneFeuille")); return; }
 
   const slug = s => String(s || "").trim().replace(/[^\w-]+/g, "_").replace(/^_+|_+$/g, "");
   const suffixe = ["_" + slug(f.nom), state.vehicule.immat && "_" + slug(state.vehicule.immat), state.vehicule.date && "_" + state.vehicule.date]
     .filter(Boolean).join("");
-  const fichiers = [{ nom: "controle" + suffixe + ".pdf", data: checklistBlob }];
-  if (piecesBlob) fichiers.push({ nom: "liste_pieces" + suffixe + ".pdf", data: piecesBlob });
-  if (commandeBlob) fichiers.push({ nom: "pieces_a_commander" + suffixe + ".pdf", data: commandeBlob });
+  const nom = "controle" + suffixe + ".pdf";
 
   let dl = null;
   try { dl = window.claude?.use ? await window.claude.use("downloads") : null; } catch (e) { dl = null; }
   if (dl) {
     try {
-      for (const fi of fichiers) await dl.save({ filename: fi.nom, data: fi.data });
+      await dl.save({ filename: nom, data: blob });
       marquerExporte();
-      toast(fichiers.length > 1 ? t("pdf.toastEnregistres", { noms: fichiers.map(fi => fi.nom).join(", ") }) : t("pdf.toastEnregistre", { nom: fichiers[0].nom }));
+      toast(t("pdf.toastEnregistre", { nom }));
     } catch (e) { toast(e && e.code === "declined" ? t("pdf.toastAnnule") : t("pdf.toastEnregImpossible", { detail: (e && (e.message || e.code)) || "erreur" })); }
     return;
   }
   marquerExporte();
-  fichiers.forEach(fi => {   // hors artefact : téléchargement classique
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(fi.data); a.download = fi.nom;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-  });
-  toast(fichiers.length > 1 ? t("pdf.toastGeneres", { noms: fichiers.map(fi => fi.nom).join(", ") }) : t("pdf.toastGenere", { nom: fichiers[0].nom }));
+  const a = document.createElement("a");   // hors artefact : téléchargement classique
+  a.href = URL.createObjectURL(blob); a.download = nom;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  toast(t("pdf.toastGenere", { nom }));
 }

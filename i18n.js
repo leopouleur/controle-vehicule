@@ -48,6 +48,7 @@ const I18N = {
     "checklist.ok": "OK",
     "checklist.pasOk": "Pas OK",
     "checklist.qteViscosite": "Quantité / viscosité",
+    "checklist.reprendreValeur": "Reprendre la dernière valeur utilisée",
     "checklist.colPiece": "Pièce à débiter / à commander",
     "checklist.colCommentaire": "Commentaire",
     "checklist.nomPiece": "Nom de la pièce…",
@@ -63,6 +64,9 @@ const I18N = {
     "checklist.verdictKo": "⛔ Contrôle terminé : défauts (KO) à traiter",
     "checklist.verdictChef": "⚠️ Contrôle terminé : points à voir avec le chef",
     "checklist.verdictOk": "✅ Contrôle terminé : rien à signaler",
+    "checklist.popupKo": "Points en KO ({n})",
+    "checklist.popupChef": "Points à voir avec le chef ({n})",
+    "checklist.popupVide": "Aucun point pour le moment.",
 
     "pieces.aide": "Saisissez la quantité dans la 2e petite colonne : elle est imprimée sur la feuille. Une pièce écrite dans un commentaire de la checklist s'y place seule en quantité 1, modifiable ici. Les cases vides se touchent pour y noter ce que vous voulez : c'est imprimé aussi.",
     "pieces.noteLibre": "Note libre",
@@ -113,12 +117,24 @@ const I18N = {
     "historique.supprimer": "Supprimer ce rapport",
 
     "pdf.toastErreurPdf": "Impossible de créer le PDF : {msg}",
-    "pdf.toastEnregistres": "PDF enregistrés : {noms}",
     "pdf.toastEnregistre": "PDF enregistré : {nom}",
     "pdf.toastAnnule": "Enregistrement annulé.",
     "pdf.toastEnregImpossible": "Enregistrement impossible ({detail}).",
-    "pdf.toastGeneres": "PDF générés : {noms}",
-    "pdf.toastGenere": "PDF généré : {nom}"
+    "pdf.toastGenere": "PDF généré : {nom}",
+
+    "export.titre": "Exporter en PDF",
+    "export.hint": "Choisissez comment exporter le rapport.",
+    "export.tout": "Tout imprimer",
+    "export.selection": "Imprimer les feuilles sélectionnées",
+    "export.annuler": "Annuler",
+    "export.exporter": "Exporter",
+    "export.feuilleControle": "Fiche de contrôle",
+    "export.feuillePieces": "Pièces à débiter",
+    "export.feuilleCommande": "Pièces à commander",
+    "export.aucuneFeuille": "Aucune feuille à exporter avec cette sélection.",
+
+    "commun.retour": "Retour",
+    "commun.fermer": "Fermer"
   },
   bs: {
     "app.titre": "Kontrola vozila",
@@ -163,6 +179,7 @@ const I18N = {
     "checklist.ok": "OK",
     "checklist.pasOk": "Nije OK",
     "checklist.qteViscosite": "Količina / viskozitet",
+    "checklist.reprendreValeur": "Preuzmi zadnju korištenu vrijednost",
     "checklist.colPiece": "Dio za zaduženje / naručivanje",
     "checklist.colCommentaire": "Komentar",
     "checklist.nomPiece": "Naziv dijela…",
@@ -178,6 +195,9 @@ const I18N = {
     "checklist.verdictKo": "⛔ Kontrola završena: kvarovi (KO) za rješavanje",
     "checklist.verdictChef": "⚠️ Kontrola završena: tačke za provjeru sa šefom",
     "checklist.verdictOk": "✅ Kontrola završena: nema primjedbi",
+    "checklist.popupKo": "KO tačke ({n})",
+    "checklist.popupChef": "Tačke za šefa ({n})",
+    "checklist.popupVide": "Trenutno nema nijedne tačke.",
 
     "pieces.aide": "Unesite količinu u 2. malu kolonu: ona se štampa na listu. Dio upisan u komentaru checkliste se tu sam postavlja u količini 1, što možete izmijeniti ovdje. Prazna polja dodirnite da upišete šta želite: i to se štampa.",
     "pieces.noteLibre": "Slobodna bilješka",
@@ -228,12 +248,24 @@ const I18N = {
     "historique.supprimer": "Obriši ovaj izvještaj",
 
     "pdf.toastErreurPdf": "Nije moguće kreirati PDF: {msg}",
-    "pdf.toastEnregistres": "PDF sačuvani: {noms}",
     "pdf.toastEnregistre": "PDF sačuvan: {nom}",
     "pdf.toastAnnule": "Snimanje otkazano.",
     "pdf.toastEnregImpossible": "Snimanje nije moguće ({detail}).",
-    "pdf.toastGeneres": "PDF generisani: {noms}",
-    "pdf.toastGenere": "PDF generisan: {nom}"
+    "pdf.toastGenere": "PDF generisan: {nom}",
+
+    "export.titre": "Izvoz u PDF",
+    "export.hint": "Odaberite kako želite izvesti izvještaj.",
+    "export.tout": "Štampaj sve",
+    "export.selection": "Štampaj odabrane listove",
+    "export.annuler": "Otkaži",
+    "export.exporter": "Izvezi",
+    "export.feuilleControle": "List kontrole",
+    "export.feuillePieces": "Dijelovi za zaduženje",
+    "export.feuilleCommande": "Dijelovi za naručiti",
+    "export.aucuneFeuille": "Nema lista za izvoz s ovim odabirom.",
+
+    "commun.retour": "Nazad",
+    "commun.fermer": "Zatvori"
   }
 };
 
